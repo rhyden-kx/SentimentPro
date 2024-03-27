@@ -1,0 +1,84 @@
+# Import necessary libraries
+import dash
+from dash import dcc, html, Input, Output
+import pandas as pd
+import plotly.express as px
+
+# Read CSV files
+nps_df = pd.read_csv('C:/Users/rhyde/nps_df.csv')
+nps_df = nps_df.iloc[:, 1:3]
+nps_df = nps_df.sort_values(by=nps_df.columns[1], ascending=False)
+topics_df = pd.read_csv('C:/Users/rhyde/TopicsofReviews.csv')
+score_df = pd.read_csv('C:/Users/rhyde/score_df.csv')
+
+# Initialize the Dash app
+app = dash.Dash(__name__)
+
+# Define the layout for the home page
+home_layout = html.Div([
+    html.H1("Sentiment Analysis Visualization Page"),
+    html.P("Welcome to our sentiment analysis visualization page! This page provides insights into customer reviews."),
+    html.Img(src=':/Users/rhyde/GXS bank image', style={'width': '50%'})
+])
+
+# Define the layout for the top 5 NPS score topics page
+top_nps_topics_layout = html.Div([
+    html.H1("Top 5 NPS Score Topics"),
+    dcc.Graph(id='top_nps_graph')
+])
+
+# Define the layout for the full list of topics sorted by NPS score page
+full_topics_layout = html.Div([
+    html.H1("Full List of Topics Sorted by NPS Score"),
+    html.Div(id='full_topics_table')
+])
+
+# Define the app layout
+app.layout = html.Div([
+    dcc.Tabs(id='tabs', value='home', children=[
+        dcc.Tab(label='Home', value='home'),
+        dcc.Tab(label='Top NPS Topics', value='top_nps_topics'),
+        dcc.Tab(label='Full Topics List', value='full_topics')
+    ]),
+    html.Div(id='tab-content')
+])
+
+""" # Define callback to switch between tabs
+@app.callback(Output('tab-content', 'children'),
+              [Input('tabs', 'value')])
+def render_content(tab):
+    if tab == 'home':
+        return home_layout
+    elif tab == 'top_nps_topics':
+        return top_nps_topics_layout
+    elif tab == 'full_topics':
+        return full_topics_layout
+
+# Callback to update the graph for top 5 NPS score topics
+@app.callback(Output('top_nps_graph', 'figure'),
+              [Input('tabs', 'value')])
+def update_top_nps_graph(tab):
+    if tab == 'top_nps_topics':
+        # Assuming 'nps_df' contains the data with 'topic' and 'nps_score'
+        top_nps_topics = nps_df.nlargest(5, 'nps_score')
+        fig = px.bar(top_nps_topics, x='topic', y='nps_score', title='Top 5 NPS Score Topics')
+        return fig
+
+# Callback to update the data table for full list of topics sorted by NPS score
+@app.callback(Output('full_topics_table', 'children'),
+              [Input('tabs', 'value')])
+def update_full_topics_table(tab):
+    if tab == 'full_topics':
+        # Assuming 'nps_df' contains the data with 'topic' and 'nps_score'
+        sorted_topics = nps_df.sort_values(by='nps_score', ascending=False)
+        table = html.Table([
+            html.Thead(html.Tr([html.Th('Topic'), html.Th('NPS Score')])),
+            html.Tbody([
+                html.Tr([html.Td(row['topic']), html.Td(row['nps_score'])]) for index, row in sorted_topics.iterrows()
+            ])
+        ])
+        return table """
+
+# Run the app
+if __name__ == '__main__':
+    app.run_server(debug=True)
