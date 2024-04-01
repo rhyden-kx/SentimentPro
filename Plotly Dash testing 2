@@ -1,8 +1,13 @@
 # Import necessary libraries
-import dash
-from dash import dcc, html, Input, Output
 import pandas as pd
+import dash
+from dash import dcc, html
 import plotly.express as px
+from dash.dependencies import Input, Output, State
+import plotly.graph_objects as go
+import pandas as pd
+import random
+
 
 # Read CSV files
 nps_df = pd.read_csv('C:/Users/rhyde/nps_df.csv')
@@ -11,74 +16,139 @@ nps_df = nps_df.sort_values(by=nps_df.columns[1], ascending=False)
 topics_df = pd.read_csv('C:/Users/rhyde/TopicsofReviews.csv')
 score_df = pd.read_csv('C:/Users/rhyde/score_df.csv')
 
+
+#initialise charts
+
+## Reviews by NPS categories
+bar_nps_cat = px.histogram(score_df, x='nps_category', title='Total reviews by categories', color='nps_category', color_discrete_map={'Promoter':'green', 'Passive':'orange', 'Detractor':'red'}, width=500)
+bar_nps_indiv = px.histogram(score_df, x='nps_indiv', title='Total reviews by NPS scores', color='nps_category', color_discrete_map={'Promoter':'green', 'Passive':'orange', 'Detractor':'red'}, width=500)
+bar_nps_indiv.update_layout(bargap=0.1)
+
+## NPS scores by topic
+nps_topic = px.bar(data_frame = nps_df,
+                 x = 'Topic_Name',
+                 y = 'NPS_Score',
+                title = 'NPS Score by Topic')
+nps_topic.update_xaxes(title_text='Topic Name')
+nps_layout = ({'xaxis': {'categoryorder':'total descending'},
+               'yaxis': {'title':{'text': 'NPS Score'}}})
+nps_topic.update_layout(nps_layout)
+
+
+## List of Most Frequent Detractors
+detractor_df = score_df[score_df['nps_category'] == 'Detractor']
+topic_frequency = detractor_df['Topic_Name'].value_counts()
+topic_frequency_df = pd.DataFrame({'Topic_Name': topic_frequency.index, 'Frequency': topic_frequency.values})
+
+topic_frequency_graph = go.Figure(data=[go.Table(
+    columnorder = [1,2],
+    columnwidth = [80,40],
+    header=dict(values=list(topic_frequency_df),
+                align='left'),
+    cells=dict(values=[topic_frequency_df.Topic_Name, topic_frequency_df.Frequency],
+               fill_color='lightgrey',
+               align='left'))
+])
+
+
+## List of Reviews for Topics w most detractors
+most_detractors = detractor_df.groupby('Topic_Name').filter(lambda x: len(x) >= 3).groupby('Topic_Name').size().nlargest(3).index
+detractor_review_list = pd.DataFrame(columns=score_df.columns)
+for topic in most_detractors:
+    topic_df = detractor_df[detractor_df['Topic_Name'] == topic].copy()  # Explicitly create a copy
+    topic_df['Review_Length'] = topic_df['Review'].apply(len)  # Add a column for review length
+    longest_reviews = topic_df.nlargest(3, 'Review_Length')  # Select the largest 3 based on review length
+    detractor_review_list = pd.concat([detractor_review_list, longest_reviews])
+detractor_review_list_display = detractor_review_list[['Review', 'Topic_Name']]
+
+detractor_review_list_graph = go.Figure(data=[go.Table(
+    header=dict(values=list(detractor_review_list_display),
+                align='left'),
+    cells=dict(values=[detractor_review_list.Review, detractor_review_list.Topic_Name],
+               fill_color='lightgrey',
+               align='left'))
+])
+
+
+# Define custom tab styles
+tab_style = {
+    'backgroundColor': '#a497ba',  # Set background color of tabs
+    'color': 'white',               # Set text color of tabs
+    'border': 'none',               # Remove border from tabs
+    'fontWeight': 'bold',           # Set font weight of tabs
+    'padding': '10px'               # Set padding of tabs
+}
+
+# Define custom selected tab style
+selected_tab_style = {
+    'backgroundColor': '#b691ba',  # Set background color of selected tab
+    'color': 'white',               # Set text color of selected tab
+    'border': 'none',               # Remove border from selected tab
+    'fontWeight': 'bold',           # Set font weight of selected tab
+    'padding': '10px'               # Set padding of selected tab
+}
+
+
+#Test Update Function
+def count_letter_a(sentence):
+    return sentence.count('a')
+
+
+
 # Initialize the Dash app
-app = dash.Dash(__name__)
+app = dash.Dash()
 
-# Define the layout for the home page
-home_layout = html.Div([
-    html.H1("Sentiment Analysis Visualization Page"),
-    html.P("Welcome to our sentiment analysis visualization page! This page provides insights into customer reviews."),
-    html.Img(src=':/Users/rhyde/GXS bank image', style={'width': '50%'})
-])
-
-# Define the layout for the top 5 NPS score topics page
-top_nps_topics_layout = html.Div([
-    html.H1("Top 5 NPS Score Topics"),
-    dcc.Graph(id='top_nps_graph')
-])
-
-# Define the layout for the full list of topics sorted by NPS score page
-full_topics_layout = html.Div([
-    html.H1("Full List of Topics Sorted by NPS Score"),
-    html.Div(id='full_topics_table')
-])
-
-# Define the app layout
+# Define the layout with multiple graphs
 app.layout = html.Div([
-    dcc.Tabs(id='tabs', value='home', children=[
-        dcc.Tab(label='Home', value='home'),
-        dcc.Tab(label='Top NPS Topics', value='top_nps_topics'),
-        dcc.Tab(label='Full Topics List', value='full_topics')
+    dcc.Tabs(id='tabs', value='tab-1', children=[
+        dcc.Tab(label='SentimentPro - GXS Introduction', value='tab-1',style=tab_style, selected_style=selected_tab_style),
+        dcc.Tab(label='Analysis', value='tab-2',style=tab_style, selected_style=selected_tab_style),
+        dcc.Tab(label='NPS Rater', value='tab-3', style=tab_style, selected_style=selected_tab_style, children=[
+            dcc.Input(id='input-1', type='text', placeholder='Enter text...', style={'width': '50%', 'height': '5%','fontSize': '15px'}),
+            html.Button('Submit', id='submit-button', n_clicks=0),
+            html.Div(id='output-div-1', style={'fontSize': '20px'})
+        ]),
+        dcc.Tab(label='Credits', value = 'tab-4',style=tab_style, selected_style=selected_tab_style)
     ]),
-    html.Div(id='tab-content')
+    html.Div(id='tabs-content')
 ])
 
-""" # Define callback to switch between tabs
-@app.callback(Output('tab-content', 'children'),
+# Define callback to update content based on tab selection
+@app.callback(Output('tabs-content', 'children'),
               [Input('tabs', 'value')])
 def render_content(tab):
-    if tab == 'home':
-        return home_layout
-    elif tab == 'top_nps_topics':
-        return top_nps_topics_layout
-    elif tab == 'full_topics':
-        return full_topics_layout
-
-# Callback to update the graph for top 5 NPS score topics
-@app.callback(Output('top_nps_graph', 'figure'),
-              [Input('tabs', 'value')])
-def update_top_nps_graph(tab):
-    if tab == 'top_nps_topics':
-        # Assuming 'nps_df' contains the data with 'topic' and 'nps_score'
-        top_nps_topics = nps_df.nlargest(5, 'nps_score')
-        fig = px.bar(top_nps_topics, x='topic', y='nps_score', title='Top 5 NPS Score Topics')
-        return fig
-
-# Callback to update the data table for full list of topics sorted by NPS score
-@app.callback(Output('full_topics_table', 'children'),
-              [Input('tabs', 'value')])
-def update_full_topics_table(tab):
-    if tab == 'full_topics':
-        # Assuming 'nps_df' contains the data with 'topic' and 'nps_score'
-        sorted_topics = nps_df.sort_values(by='nps_score', ascending=False)
-        table = html.Table([
-            html.Thead(html.Tr([html.Th('Topic'), html.Th('NPS Score')])),
-            html.Tbody([
-                html.Tr([html.Td(row['topic']), html.Td(row['nps_score'])]) for index, row in sorted_topics.iterrows()
-            ])
+    if tab == 'tab-1':
+        return html.Div([
+            html.H1("SentimentPro"),
+            html.P('To create an innovative system that harnesses advanced natural language processing techniques to analyse customer feedback from various platforms, to improve GXS bank services. Transform raw, qualitative feedback into actionable quantitative data, enabling targeted improvements in service offerings.')
         ])
-        return table """
+    elif tab == 'tab-2':
+        return html.Div([
+            html.H2("Graphs and Charts"),
+            dcc.Graph(figure=bar_nps_cat),
+            dcc.Graph(figure=bar_nps_indiv),
+            dcc.Graph(figure=nps_topic),
+            dcc.Graph(figure=topic_frequency_graph),
+            dcc.Graph(figure=detractor_review_list_graph)
+        ])
+    elif tab == 'tab-4':
+        return html.Div([
+            html.P("SentimentPro was built by DSA3101 Team DKLAN")
+        ])
 
-# Run the app
+@app.callback(
+    Output('output-div-1', 'children'),
+    [Input('submit-button', 'n_clicks')],
+    [State('input-1', 'value')]
+)
+def update_output(n_clicks, sentence):
+    if n_clicks > 0 and sentence is not None:
+        count_a = count_letter_a(sentence)
+        return f'Number of "a"s: {count_a}'
+    else:
+        return ''
+    
+
+# Run the server
 if __name__ == '__main__':
     app.run_server(debug=True)
