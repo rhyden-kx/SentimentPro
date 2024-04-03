@@ -1,4 +1,5 @@
 # Import necessary libraries
+import os
 import pandas as pd
 import dash
 from dash import dcc, html
@@ -27,85 +28,16 @@ import time
 
 # DATA PREPERATION
 
+os.chdir('C:/Users/rhyde')
+
 # Read CSV files
-appStore = pd.read_csv('C:/Users/rhyde/AppStoreData.csv')
-googlePlay = pd.read_csv('C:/Users/rhyde/PlayStoreData.csv')
-nps_df = pd.read_csv('C:/Users/rhyde/nps_df.csv')
+appStore = pd.read_csv('AppStoreData.csv')
+googlePlay = pd.read_csv('PlayStoreData.csv')
+nps_df = pd.read_csv('nps_df.csv')
 nps_df = nps_df.iloc[:, 1:3]
 nps_df = nps_df.sort_values(by=nps_df.columns[1], ascending=False)
-topics_df = pd.read_csv('C:/Users/rhyde/TopicsofReviews.csv')
-score_df = pd.read_csv('C:/Users/rhyde/score_df.csv')
-
-
-
-""" #BACK END CODE [MODEL TRAINING]
-
-#filter by score and get review col
-asResponse =appStore.loc[appStore['rating'] == 5].review
-gpResponse = googlePlay.loc[googlePlay['score'] == 5].text
-
-asResponse = asResponse.values.tolist()
-gpResponse = gpResponse.values.tolist()
-
-#wordtokenization
-wt_as = [word_tokenize(review) for review in asResponse]
-wt_gp = [word_tokenize(review) for review in gpResponse]
-
-
-#after word tokenizing each sentance, we can lemma/stem
-#ok according to reddit, stop word removal can be harmful if we use nnm like bert or RNNS. So i wont do it for now
-#we should use our own stopwords, and to find out which are the stop words, word cloud might come into play
-#use tldf?
-#fk it ill roll first 
-
-#stop_words = ENGLISH_STOP_WORDS
-
-vect = TfidfVectorizer().fit(asResponse)
-vect_tfidf = vect.transform(asResponse)
-print(vect_tfidf.toarray())
-
-
-#General observation for the entire dataset
-#calculate sentiment of sentence
-sentiment_scoring = [TextBlob(review) for review in gpResponse] # this is for rating = 5
-
-MODEL = f"cardiffnlp/twitter-roberta-base-sentiment"
-tokenizer = AutoTokenizer.from_pretrained(MODEL)
-model = AutoModelForSequenceClassification.from_pretrained(MODEL)
-example = "This oatmeal is questionable. It is mushy, soft and just so darn weird. I prefer Quaker oats"
-TextBlob(example).sentiment
-encoded_text = tokenizer(example, return_tensors='pt')
-output = model(**encoded_text)
-scores = output[0][0].detach().numpy()
-scores = softmax(scores)
-score_dict = {
-    'roberta_neg' : scores[0],
-    'roberta_neu' : scores[1],
-    'roberta_pos' : scores[2]
-}
-
-def roberta_score(example):
-    encoded_text = tokenizer(example, return_tensors='pt')
-    output = model(**encoded_text)
-    scores = output[0][0].detach().numpy()
-    scores = softmax(scores)
-    score_dict = {
-        'roberta_neg' : scores[0],
-        'roberta_neu' : scores[1],
-        'roberta_pos' : scores[2]
-    }
-    return score_dict
-
-res = {}
-for i, row in tqdm(googlePlay.iterrows(), total = len(asResponse)):
-    text = row['text']
-    myid = row["text"]
-    res[myid] = roberta_score(text)
-
-result_df = pd.DataFrame(res).T
-
-from transformers import pipeline
-sent_pipeline = pipeline("sentiment-analysis") """
+topics_df = pd.read_csv('TopicsofReviews.csv')
+score_df = pd.read_csv('score_df.csv')
 
 
 #NPS Scoring
@@ -349,169 +281,196 @@ detractor_review_list_graph = detractor_review_list_graph.update_layout(
     height = 1200
     )
 
-
-# Define custom tab styles
-tab_style = {
-    'backgroundColor': '#0c0121',   # Set background color of tabs
-    'color': '#f9f9f7',             # Set text color of tabs
-    'border': 'none',               # Remove border from tabs
-    'fontWeight': 'bold',           # Set font weight of tabs
-    'fontSize': '16px',             # Set font size of tab text
-    'fontFamily': 'Courier New, serif',  # Set font family
-    'padding': '10px'               # Set padding of tabs
-}
-
-# Define custom selected tab style
-selected_tab_style = {
-    'backgroundColor': '#8929d7',   # Set background color of selected tab
-    'color': 'black',               # Set text color of selected tab
-    'border': 'none',               # Remove border from selected tab
-    'fontWeight': 'bold',           # Set font weight of selected tab
-    'fontSize': '16px',             # Set font size of tab text
-    'fontFamily': 'Courier New, serif',  # Set font family
-    'padding': '10px'               # Set padding of selected tab
-}
-
-header1_style = {
-    'fontWeight': 'bold',
-    'fontFamily': 'Courier New, serif',
-    'fontSize': '30px'
-} 
-
-header2_style = {
-    'fontFamily': 'Courier New, serif',
-    'fontSize': '20px',
-    'color': '#444454'
-} 
-
-header3_style = {
-    'fontFamily': 'Courier New, serif',
-    'fontSize': '16px',
-    'color': '#444454'
-} 
-
-para_style = {
-    'fontFamily': 'Courier New, serif',
-    'fontSize': '14px',
-    'color': '#2f2f33'
-} 
-
 # Initialize the Dash app
-app = dash.Dash()
+app = dash.Dash(__name__, external_stylesheets=['styles.css'])
 
-# Define the layout with multiple graphs
-app.layout = html.Div(style={'backgroundColor': '#fafbf6'}, children = [
-    html.H1("SentimentPro - GXS", style = header1_style),
-    dcc.Tabs(id='tabs', value='tab-1', children=[
-        dcc.Tab(label='Introduction', value='tab-1',style=tab_style, selected_style=selected_tab_style),
-        dcc.Tab(label='Overview of Data', value='tab-2',style=tab_style, selected_style=selected_tab_style),
-        dcc.Tab(label = 'Promoter Analysis', value = 'tab-3', style=tab_style, selected_style=selected_tab_style),
-        dcc.Tab(label = 'Detractor Analysis', value = 'tab-4', style=tab_style, selected_style=selected_tab_style),
-        dcc.Tab(label='NPS Rater', value='tab-5', style=tab_style, selected_style=selected_tab_style, children=[
-            html.H2("Review Analyzer", style = header2_style),
-            dcc.Input(id='input-1', type='text', placeholder='Enter Review Here... ', style={'width': '50%', 'height': '8%','fontSize': '15px'}),
-            html.Button('Submit', id='submit-button', n_clicks=0),
-            html.Div(id='output-div-1', style={'fontSize': '20px'})
-        ]),
-        dcc.Tab(label='Credits', value = 'tab-6',style=tab_style, selected_style=selected_tab_style)
-    ]),
-    html.Div(id='tabs-content')
-])
+tab_style = {
+    'borderRadius': '10px',
+    'backgroundColor': '#CDB2FF',  # Light pastel purple background color
+    'color': '#444454',  # Bolded grey text color
+    'fontWeight': 'bold',
+}
+
+selected_tab_style = {
+    'borderRadius': '10px',
+    'backgroundColor': '#F0F2F6',  # White background color for selected tab
+    'color': '#444454',  # Bolded grey text color
+    'fontWeight': 'bold',
+    'transition': 'background-color 0.2s, color 0.2s, transform 0.2s',
+    'transform': 'scale(1.03)',
+    'boxShadow': '4px 4px 20px rgba(0, 0, 0, 0.4)'
+}
+
+# Define the layout
+app.layout = html.Div(
+    style={
+        'backgroundColor': '#F0F2F6',  # Light gray background color
+        'fontFamily': 'Arial, sans-serif',  # Sans-serif font family
+        'padding': '40px',  # Padding for the whole page
+    },
+    children=[
+        html.H1("SentimentPro - GXS", style={'color': '#8929d7', 'textAlign': 'center'}),  # Centered heading with custom color
+        dcc.Tabs(
+            id='tabs',
+            value='tab-1',
+            children=[
+                dcc.Tab(
+                    label='Introduction',
+                    value='tab-1',
+                    style=tab_style,
+                    selected_style=selected_tab_style
+                ),
+                dcc.Tab(
+                    label='Overview of Data',
+                    value='tab-2',
+                    style=tab_style,
+                    selected_style=selected_tab_style
+                ),
+                dcc.Tab(
+                    label='Promoter Analysis',
+                    value='tab-3',
+                    style=tab_style,
+                    selected_style=selected_tab_style
+                ),
+                dcc.Tab(
+                    label='Detractor Analysis',
+                    value='tab-4',
+                    style=tab_style,
+                    selected_style=selected_tab_style
+                ),
+                dcc.Tab(
+                    label='NPS Rater',
+                    value='tab-5',
+                    children=[
+                        html.H2("Review Analyzer", style={'color': '#8929d7'}),
+                        dcc.Input(
+                            id='input-1',
+                            type='text',
+                            placeholder='Enter Review Here...',
+                            style={'width': '50%', 'height': '8%', 'fontSize': '15px', 'borderRadius': '10px', 'border': '1px solid #8929d7'}
+                        ),
+                        html.Button('Submit', id='submit-button', n_clicks=0, style={'height': '8%', 'fontSize': '15px', 'borderRadius': '10px', 'border': '2px solid #8929d7'}),
+                        html.Div(id='output-div-1', style={'fontSize': '20px'})
+                    ],
+                    style=tab_style,
+                    selected_style=selected_tab_style
+                ),
+                dcc.Tab(
+                    label='Credits',
+                    value='tab-6',
+                    style=tab_style,
+                    selected_style=selected_tab_style
+                )
+            ],
+            colors={'border': '#8929d7', 'primary': '#8929d7', 'background': '#F0F2F6'}  # Custom tab colors
+        ),
+        html.Div(
+            id='tabs-content',
+            children=[
+                html.P(
+                    "Discover how SentimentPro can revolutionize your data analysis!",
+                    style={'color': '#444454', 'textAlign': 'center', 'marginTop': '20px', 'animation': 'move 5s infinite'}
+                )
+            ]
+        )
+    ]
+)
 
 # Define callback to update content based on tab selection
 @app.callback(Output('tabs-content', 'children'),
               [Input('tabs', 'value')])
 def render_content(tab):
     if tab == 'tab-1':
+        # Define custom styles
+        card_style = {
+            'border': '2px solid #8929d7',  # Purple border
+            'padding': '20px',              # Padding inside the card
+            'borderRadius': '10px',         # Rounded corners
+            'margin': '10px',               # Margin between cards
+            'fontFamily': 'Arial, sans-serif',  # Sans-serif font family
+            'fontSize': '18px',             # Font size
+        }
         return html.Div([
-            html.H1("SentimentPro", style = header1_style),
+            html.H1("SentimentPro", style={'textAlign': 'center'}),
             html.Div([
-                html.H2("SentimentPro Overview:", style = header2_style),
-                html.P("To create an innovative system that harnesses advanced natural language processing techniques to analyse customer feedback from various platforms, to improve GXS bank services. Transform raw, qualitative feedback into actionable quantitative data, enabling targeted improvements in service offerings.",
-                       style = para_style),
-            ]),
+                html.Div([
+                    html.H2("SentimentPro Overview:", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '20px'}),
+                    html.P("To create an innovative system that harnesses advanced natural language processing techniques to analyze customer feedback from various platforms, to improve GXS bank services. Transform raw, qualitative feedback into actionable quantitative data, enabling targeted improvements in service offerings.")
+                ], style=card_style),
 
-            html.Div([
-                html.H2("Background Information", style = header2_style),
-                html.P("Data was scraped from sources including: Apple App Store and Google Play Store",
-                       style = para_style),
-            ]),
-            
-            html.Div([
-                html.H2("Dashboard Navigation", style = header2_style),
                 html.Div([
-                    html.H3("Introduction", style = header3_style),
-                    html.P("Provides overview of this dashboard and instructions on how to navigate",
-                           style = para_style),
-                ]),
+                    html.H2("Background Information", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '20px'}),
+                    html.P("Data was scraped from sources including: Apple App Store and Google Play Store")
+                ], style=card_style),
+
                 html.Div([
-                    html.H3("Overview of Data", style = header3_style),
-                    html.P("Provides an analysis of GXS App reviews",
-                           style = para_style),
-                ]),
-                html.Div([
-                    html.H3("Promoter Analysis", style = header3_style),
-                    html.P("A summary of Positive feedback regarding GXS",
-                           style = para_style),
-                ]),
-                html.Div([
-                    html.H3("Detractor Analysis", style = header3_style),
-                    html.P("A summary of Negative feedback regarding GXS",
-                           style = para_style),
-                ]),
-                html.Div([
-                    html.H3("NPS Scorer", style = header3_style),
-                    html.P("The NPS Scorer section allows users to input new reviews for the GXS Bank app. Upon submission, the system not only provides an NPS (Net Promoter Score) for the review but also offers insightful suggestions for improvement based on the feedback",
-                           style = para_style),
-                ]),
-                html.Div([
-                    html.H3("Credits", style = header3_style),
-                    html.P("Acknowledgements and References", style = para_style),
-                ]),
-            ]),
-            html.Div([
-                html.Button("Credits", id="credits-button"),
+                    html.H2("Dashboard Navigation", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '20px'}),
+                    html.Div([
+                        dcc.Link(html.H3("Introduction"), href='#tab-1', style={'color': '#8929d7'}),
+                        html.P("Provides overview of this dashboard and instructions on how to navigate")
+                    ]),
+                    html.Div([
+                        dcc.Link(html.H3("Overview of Data"), href='#tab-2', style={'color': '#8929d7'}),
+                        html.P("Provides an analysis of GXS App reviews")
+                    ]),
+                    html.Div([
+                        dcc.Link(html.H3("Promoter Analysis"), href='#tab-3', style={'color': '#8929d7'}),
+                        html.P("A summary of Positive feedback regarding GXS")
+                    ]),
+                    html.Div([
+                        dcc.Link(html.H3("Detractor Analysis"), href='#tab-4', style={'color': '#8929d7'}),
+                        html.P("A summary of Negative feedback regarding GXS")
+                    ]),
+                    html.Div([
+                        dcc.Link(html.H3("NPS Scorer"), href='#tab-5', style={'color': '#8929d7'}),
+                        html.P("The NPS Scorer section allows users to input new reviews for the GXS Bank app. Upon submission, the system not only provides an NPS (Net Promoter Score) for the review but also offers insightful suggestions for improvement based on the feedback")
+                    ]),
+                    html.Div([
+                        dcc.Link(html.H3("Credits"), href='#tab-6', style={'color': '#8929d7'}),
+                        html.P("Acknowledgements and References")
+                    ])
+                ], style=card_style)
             ])
         ])
     elif tab == 'tab-2':
         return html.Div([
-            html.H1("Graphical Insights", style = header2_style),
+            html.H2("Graphical Insights"),
             html.P("Add in some basic analysis and/or statistics?"),
             dcc.Graph(figure=bar_nps_cat),
-            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
+            html.Hr(),  # Dashed divider line
             dcc.Graph(figure=bar_nps_indiv),
-            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
+            html.Hr(),  # Dashed divider line
             dcc.Graph(figure=nps_topic),
-            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
+            html.Hr(),  # Dashed divider line
             dcc.Graph(figure=main_topic_graph)
         ])
     elif tab == 'tab-3':
         return html.Div([
-            html.H1("Analysis of Promoter Data", style = header2_style),
+            html.H2("Analysis of Promoter Data"),
             dcc.Graph(figure=topic_frequency_promoter_graph),
-            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
+            html.Hr(),  # Dashed divider line
             dcc.Graph(figure=promoter_review_list_graph)
         ])
     elif tab == 'tab-4':
         return html.Div([
-            html.H1("Analysis of Detractor Data", style = header2_style),
+            html.H2("Analysis of Detractor Data"),
             dcc.Graph(figure=topic_frequency_detractor_graph),
-            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
+            html.Hr(),  # Dashed divider line
             dcc.Graph(figure=detractor_review_list_graph)
         ])
 
     elif tab == 'tab-6':
         return html.Div([
-            html.H1("Credits", style = header2_style),
+            html.H2("Credits"),
             html.Div([
-                html.H3("Development Team", style = header3_style),
+                html.H3("Development Team"),
                 html.Ul([
                     html.Li("Front End: Aiko Liana Amran | Denise Teh Kai Xin | Low Jia Li Natalie | Ng Yee Gee Kiley"),
                     html.Li("Back End: Anthea Ang Qiao En | Chan Wan Xin , Lydia | Lucia Pan Yucheng | Neleh Tok Ying Yun")
                 ])
             ]),
             html.Div([
-                html.H3("Stakeholders", style = header3_style),
+                html.H3("Stakeholders"),
                 html.Ul([
                     html.Li("Team DKLAN"),
                     html.Li("GXS Customer Experience and Business Bevelopment Team"),
@@ -519,7 +478,7 @@ def render_content(tab):
                 ])
             ]),
             html.Div([
-                html.H3("Special Thanks", style = header3_style),
+                html.H3("Special Thanks"),
                 html.Ul([
                     html.Li("Opensource community & Model creators")
                 ])
@@ -554,14 +513,6 @@ def update_output(n_clicks, sentence):
         return output_content
     else:
         return ''
-
-@app.callback(
-    dash.dependencies.Output('credits-button', 'n_clicks'),
-    [dash.dependencies.Input('credits-button', 'n_clicks')]
-)
-def navigate_to_credits_tab(n_clicks):
-    # Implement code to navigate to the credits tab
-    return n_clicks
 
 
 # Run the server
