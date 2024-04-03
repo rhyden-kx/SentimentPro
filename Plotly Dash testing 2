@@ -5,11 +5,31 @@ from dash import dcc, html
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
-import pandas as pd
-import random
+import matplotlib.pyplot as plt 
+import seaborn as sns
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+from textblob import TextBlob
+from wordcloud import WordCloud
+from nltk import word_tokenize
+from langdetect import detect_langs
+from wordcloud import WordCloud, STOPWORDS
+import re
+from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import TfidfVectorizer
+from tqdm import tqdm
+from transformers import AutoTokenizer
+from transformers import AutoModelForSequenceClassification
+from scipy.special import softmax
+import time
 
+# DATA PREPERATION
 
 # Read CSV files
+appStore = pd.read_csv('C:/Users/rhyde/AppStoreData.csv')
+googlePlay = pd.read_csv('C:/Users/rhyde/PlayStoreData.csv')
 nps_df = pd.read_csv('C:/Users/rhyde/nps_df.csv')
 nps_df = nps_df.iloc[:, 1:3]
 nps_df = nps_df.sort_values(by=nps_df.columns[1], ascending=False)
@@ -17,98 +37,383 @@ topics_df = pd.read_csv('C:/Users/rhyde/TopicsofReviews.csv')
 score_df = pd.read_csv('C:/Users/rhyde/score_df.csv')
 
 
+
+""" #BACK END CODE [MODEL TRAINING]
+
+#filter by score and get review col
+asResponse =appStore.loc[appStore['rating'] == 5].review
+gpResponse = googlePlay.loc[googlePlay['score'] == 5].text
+
+asResponse = asResponse.values.tolist()
+gpResponse = gpResponse.values.tolist()
+
+#wordtokenization
+wt_as = [word_tokenize(review) for review in asResponse]
+wt_gp = [word_tokenize(review) for review in gpResponse]
+
+
+#after word tokenizing each sentance, we can lemma/stem
+#ok according to reddit, stop word removal can be harmful if we use nnm like bert or RNNS. So i wont do it for now
+#we should use our own stopwords, and to find out which are the stop words, word cloud might come into play
+#use tldf?
+#fk it ill roll first 
+
+#stop_words = ENGLISH_STOP_WORDS
+
+vect = TfidfVectorizer().fit(asResponse)
+vect_tfidf = vect.transform(asResponse)
+print(vect_tfidf.toarray())
+
+
+#General observation for the entire dataset
+#calculate sentiment of sentence
+sentiment_scoring = [TextBlob(review) for review in gpResponse] # this is for rating = 5
+
+MODEL = f"cardiffnlp/twitter-roberta-base-sentiment"
+tokenizer = AutoTokenizer.from_pretrained(MODEL)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL)
+example = "This oatmeal is questionable. It is mushy, soft and just so darn weird. I prefer Quaker oats"
+TextBlob(example).sentiment
+encoded_text = tokenizer(example, return_tensors='pt')
+output = model(**encoded_text)
+scores = output[0][0].detach().numpy()
+scores = softmax(scores)
+score_dict = {
+    'roberta_neg' : scores[0],
+    'roberta_neu' : scores[1],
+    'roberta_pos' : scores[2]
+}
+
+def roberta_score(example):
+    encoded_text = tokenizer(example, return_tensors='pt')
+    output = model(**encoded_text)
+    scores = output[0][0].detach().numpy()
+    scores = softmax(scores)
+    score_dict = {
+        'roberta_neg' : scores[0],
+        'roberta_neu' : scores[1],
+        'roberta_pos' : scores[2]
+    }
+    return score_dict
+
+res = {}
+for i, row in tqdm(googlePlay.iterrows(), total = len(asResponse)):
+    text = row['text']
+    myid = row["text"]
+    res[myid] = roberta_score(text)
+
+result_df = pd.DataFrame(res).T
+
+from transformers import pipeline
+sent_pipeline = pipeline("sentiment-analysis") """
+
+
+#NPS Scoring
+#VADER
+
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+analyzer = SentimentIntensityAnalyzer()
+
+#nps_scoring
+#vader function
+#2. Output should be: nps_indiv, nps_category, topic (?) from the score_df ?
+
+def nps_score(review) :
+    vs = analyzer.polarity_scores(review)
+    pos_score = vs['pos']
+    neg_score = vs['neg']
+    neu_score = vs['neu']
+    comp_score = vs['compound']
+    nps_indv = -1
+    #mapping
+    if -1 <= vs['compound'] <= -9/11:
+        nps_indiv = 0
+    elif -9/11 < vs['compound'] <= -7/11:
+        nps_indiv = 1
+    elif -7/11 < vs['compound'] <= -5/11:
+        nps_indiv = 2
+    elif -5/11 < vs['compound'] <= -3/11:
+        nps_indiv = 3
+    elif -3/11 < vs['compound'] <= -1/11:
+        nps_indiv = 4
+    elif -1/11 < vs['compound'] <= 1/11:
+        nps_indiv = 5
+    elif 1/11 < vs['compound'] <= 3/11:
+        nps_indiv = 6
+    elif 3/11 < vs['compound'] <= 5/11:
+        nps_indiv = 7
+    elif 5/11 < vs['compound'] <= 7/11:
+        nps_indiv = 8
+    elif 7/11 < vs['compound'] <= 9/11:
+        nps_indiv = 9
+    else:
+        nps_indiv = 10
+    return nps_indiv
+
+
+#nps category
+def nps_cat(review) :
+    nps_indiv = nps_score(review)
+    cat = ""
+    if nps_indiv >= 9:  # Promoters
+        cat = 'Promoter'
+    elif nps_indiv >= 7:  # Passives
+        cat = 'Passive'
+    else:  # Detractors
+        cat = 'Detractor'
+    return cat
+
+
+import os
+
+
+API_KEY = "sk-ms7SU43E34tS9UJks5RD2KM3m1JumOR2pM73Dk95VzKjM6TZ"
+
+API_KEY = API_KEY or os.getenv("H2O_GPT_E_API_KEY")
+
+if not API_KEY:
+    raise ValueError("Please configure h2ogpte API key")
+
+REMOTE_ADDRESS = "https://h2ogpte.genai.h2o.ai"
+
+from h2ogpte import H2OGPTE
+
+client = H2OGPTE(address=REMOTE_ADDRESS, api_key=API_KEY)
+
+#data extraction
+def review_analysis(review):
+    extract = client.extract_data(
+        text_context_list= [review],
+        #pre_prompt_extract="Pay attention and look at all people. Your job is to collect their names.\n",
+        prompt_extract="List the good thing and suggestions for improvement. Ignore grammatical errors and awkward languages"
+    )
+    # List of LLM answers per text input
+    extracted_text_list = ''
+    for extract_list_item in extract.content:
+        for s in extract_list_item.split("\n"):
+            extracted_text_list += s + '\n\n'
+    return(extracted_text_list)
+
+
+#FRONT END CODE [VISUALIZATIONS]
+
 #initialise charts
 
 ## Reviews by NPS categories
-bar_nps_cat = px.histogram(score_df, x='nps_category', title='Total reviews by categories', color='nps_category', color_discrete_map={'Promoter':'green', 'Passive':'orange', 'Detractor':'red'}, width=500)
-bar_nps_indiv = px.histogram(score_df, x='nps_indiv', title='Total reviews by NPS scores', color='nps_category', color_discrete_map={'Promoter':'green', 'Passive':'orange', 'Detractor':'red'}, width=500)
-bar_nps_indiv.update_layout(bargap=0.1)
+bar_nps_cat = px.histogram(score_df, x='nps_category', 
+                           title='Frequency of reviews by Categories', 
+                           color='nps_category', 
+                           color_discrete_map={'Promoter':'green', 'Passive':'orange', 'Detractor':'red'},
+                           width=500)
+bar_nps_indiv = px.histogram(score_df, x='nps_indiv', 
+                             title='Frequency of reviews by NPS scores', 
+                             color='nps_category', 
+                             color_discrete_map={'Promoter':'green', 'Passive':'orange', 'Detractor':'red'}, 
+                             width=500)
+bar_nps_indiv = bar_nps_indiv.update_layout(bargap=0.1)
 
 ## NPS scores by topic
+c_scale = ['red','orange','green']
 nps_topic = px.bar(data_frame = nps_df,
                  x = 'Topic_Name',
                  y = 'NPS_Score',
-                title = 'NPS Score by Topic')
+                title = 'NPS Score of Topics', color='NPS_Score',
+                color_continuous_scale = c_scale)
 nps_topic.update_xaxes(title_text='Topic Name')
 nps_layout = ({'xaxis': {'categoryorder':'total descending'},
                'yaxis': {'title':{'text': 'NPS Score'}}})
-nps_topic.update_layout(nps_layout)
+nps_topic = nps_topic.update_layout(nps_layout)
+
+## Frequency of Main Topics
+main_topic = ['User Interface', 'Money Growth (Interest Rates)', 'Login & Account Setup', 'App Responsiveness', 'Customer trust',
+       'Customer Services', 'Safety', 'Credit card usage', 'Competition']
+topic_counts = topics_df['Topic_Name'].value_counts().loc[main_topic].sort_values()
+main_topic_graph = px.bar(topic_counts,
+             x=topic_counts.index, y=topic_counts.values,
+             labels={'index':'Main Topic', 'y':'Frequency'},
+             title='Frequency Count of Reviews by Topics',
+             color_discrete_sequence=['#8401ff'])
+
+
+## List of Reviews for top Promoters
+promoter_df = score_df[score_df['nps_category'] == 'Promoter']
+topic_frequency_promoter = promoter_df['Topic_Name'].value_counts()
+topic_frequency_promoter_df = pd.DataFrame({'Topic_Name': topic_frequency_promoter.index, 'Frequency': topic_frequency_promoter.values})
+
+topic_frequency_promoter_graph = go.Figure(data=[go.Table(
+    columnorder = [1,2],
+    columnwidth = [80,40],
+    header=dict(values=list(topic_frequency_promoter_df),
+                line_color='darkslategray',
+                fill_color='#220f47',
+                align='left',
+                font=dict(color='white', size=15)
+                ),
+    cells=dict(values=[topic_frequency_promoter_df.Topic_Name, topic_frequency_promoter_df.Frequency],
+               line_color='darkslategray',
+               fill_color = [['#f7f7f7','#d7c8e6']*22],
+               align='left',
+               font = dict(size = 12)))
+        
+], layout = dict(autosize=True))
+
+topic_frequency_promoter_graph = topic_frequency_promoter_graph.update_layout(
+    title_text="Topic Frequency - Promoters",  # Title of the table
+    height = 700
+    )
+
+#Reviews from Top Promoters
+
+most_promoters = promoter_df.groupby('Topic_Name').filter(lambda x: len(x) >= 3).groupby('Topic_Name').size().nlargest(3).index
+promoter_review_list = pd.DataFrame(columns=score_df.columns)
+for topic in most_promoters:
+    topic_df_promoter = promoter_df[promoter_df['Topic_Name'] == topic].copy()  # Explicitly create a copy
+    topic_df_promoter['Review_Length'] = topic_df_promoter['Review'].apply(len)  # Add a column for review length
+    longest_reviews = topic_df_promoter.nlargest(3, 'Review_Length')  # Select the largest 3 based on review length
+    promoter_review_list = pd.concat([promoter_review_list, longest_reviews])
+promoter_review_list_display = promoter_review_list[['Review', 'Topic_Name']]
+
+promoter_review_list_graph = go.Figure(data=[go.Table(
+    header=dict(values=list(promoter_review_list_display),
+                line_color='darkslategray',
+                fill_color='#220f47',
+                align='left',
+                font=dict(color='white', size=15)
+                ),
+    cells=dict(values=[promoter_review_list.Review, promoter_review_list.Topic_Name],
+               line_color='darkslategray',
+               fill_color = [['#f7f7f7','#d7c8e6']*22],
+               align=['left','center'],
+               font = dict(size = 13)))
+], layout = dict(autosize=True))
+
+promoter_review_list_graph = promoter_review_list_graph.update_layout(
+    title_text="Positive Reviews from Promoters",  # Title of the table
+    height = 1200
+    )
 
 
 ## List of Most Frequent Detractors
 detractor_df = score_df[score_df['nps_category'] == 'Detractor']
-topic_frequency = detractor_df['Topic_Name'].value_counts()
-topic_frequency_df = pd.DataFrame({'Topic_Name': topic_frequency.index, 'Frequency': topic_frequency.values})
+topic_frequency_detractor = detractor_df['Topic_Name'].value_counts()
+topic_frequency_detractor_df = pd.DataFrame({'Topic_Name': topic_frequency_detractor.index, 'Frequency': topic_frequency_detractor.values})
 
-topic_frequency_graph = go.Figure(data=[go.Table(
+topic_frequency_detractor_graph = go.Figure(data=[go.Table(
     columnorder = [1,2],
     columnwidth = [80,40],
-    header=dict(values=list(topic_frequency_df),
-                align='left'),
-    cells=dict(values=[topic_frequency_df.Topic_Name, topic_frequency_df.Frequency],
-               fill_color='lightgrey',
-               align='left'))
-])
+    header=dict(values=list(topic_frequency_detractor_df),
+                line_color='darkslategray',
+                fill_color='#220f47',
+                align='left',
+                font=dict(color='white', size=15)
+                ),
+    cells=dict(values=[topic_frequency_detractor_df.Topic_Name, topic_frequency_detractor_df.Frequency],
+               line_color='darkslategray',
+               fill_color = [['#f7f7f7','#d7c8e6']*22],
+               align='left',
+               font = dict(size = 12)))
+        
+], layout = dict(autosize=True))
 
+topic_frequency_detractor_graph = topic_frequency_detractor_graph.update_layout(
+    title_text="Topic Frequency - Detractors",  # Title of the table
+    height = 700
+    )
 
 ## List of Reviews for Topics w most detractors
 most_detractors = detractor_df.groupby('Topic_Name').filter(lambda x: len(x) >= 3).groupby('Topic_Name').size().nlargest(3).index
 detractor_review_list = pd.DataFrame(columns=score_df.columns)
 for topic in most_detractors:
-    topic_df = detractor_df[detractor_df['Topic_Name'] == topic].copy()  # Explicitly create a copy
-    topic_df['Review_Length'] = topic_df['Review'].apply(len)  # Add a column for review length
-    longest_reviews = topic_df.nlargest(3, 'Review_Length')  # Select the largest 3 based on review length
+    topic_df_detractor = detractor_df[detractor_df['Topic_Name'] == topic].copy()  # Explicitly create a copy
+    topic_df_detractor['Review_Length'] = topic_df_detractor['Review'].apply(len)  # Add a column for review length
+    longest_reviews = topic_df_detractor.nlargest(3, 'Review_Length')  # Select the largest 3 based on review length
     detractor_review_list = pd.concat([detractor_review_list, longest_reviews])
 detractor_review_list_display = detractor_review_list[['Review', 'Topic_Name']]
 
 detractor_review_list_graph = go.Figure(data=[go.Table(
     header=dict(values=list(detractor_review_list_display),
-                align='left'),
+                line_color='darkslategray',
+                fill_color='#220f47',
+                align='left',
+                font=dict(color='white', size=15)
+                ),
     cells=dict(values=[detractor_review_list.Review, detractor_review_list.Topic_Name],
-               fill_color='lightgrey',
-               align='left'))
-])
+               line_color='darkslategray',
+               fill_color = [['#f7f7f7','#d7c8e6']*22],
+               align=['left','center'],
+               font = dict(size = 13)))
+], layout = dict(autosize=True))
+
+detractor_review_list_graph = detractor_review_list_graph.update_layout(
+    title_text="Negative Reviews from Detractors",  # Title of the table
+    height = 1200
+    )
 
 
 # Define custom tab styles
 tab_style = {
-    'backgroundColor': '#a497ba',  # Set background color of tabs
-    'color': 'white',               # Set text color of tabs
+    'backgroundColor': '#0c0121',   # Set background color of tabs
+    'color': '#f9f9f7',             # Set text color of tabs
     'border': 'none',               # Remove border from tabs
     'fontWeight': 'bold',           # Set font weight of tabs
+    'fontSize': '16px',             # Set font size of tab text
+    'fontFamily': 'Courier New, serif',  # Set font family
     'padding': '10px'               # Set padding of tabs
 }
 
 # Define custom selected tab style
 selected_tab_style = {
-    'backgroundColor': '#b691ba',  # Set background color of selected tab
-    'color': 'white',               # Set text color of selected tab
+    'backgroundColor': '#8929d7',   # Set background color of selected tab
+    'color': 'black',               # Set text color of selected tab
     'border': 'none',               # Remove border from selected tab
     'fontWeight': 'bold',           # Set font weight of selected tab
+    'fontSize': '16px',             # Set font size of tab text
+    'fontFamily': 'Courier New, serif',  # Set font family
     'padding': '10px'               # Set padding of selected tab
 }
 
+header1_style = {
+    'fontWeight': 'bold',
+    'fontFamily': 'Courier New, serif',
+    'fontSize': '30px'
+} 
 
-#Test Update Function
-def count_letter_a(sentence):
-    return sentence.count('a')
+header2_style = {
+    'fontFamily': 'Courier New, serif',
+    'fontSize': '20px',
+    'color': '#444454'
+} 
 
+header3_style = {
+    'fontFamily': 'Courier New, serif',
+    'fontSize': '16px',
+    'color': '#444454'
+} 
 
+para_style = {
+    'fontFamily': 'Courier New, serif',
+    'fontSize': '14px',
+    'color': '#2f2f33'
+} 
 
 # Initialize the Dash app
 app = dash.Dash()
 
 # Define the layout with multiple graphs
-app.layout = html.Div([
+app.layout = html.Div(style={'backgroundColor': '#fafbf6'}, children = [
+    html.H1("SentimentPro - GXS", style = header1_style),
     dcc.Tabs(id='tabs', value='tab-1', children=[
-        dcc.Tab(label='SentimentPro - GXS Introduction', value='tab-1',style=tab_style, selected_style=selected_tab_style),
-        dcc.Tab(label='Analysis', value='tab-2',style=tab_style, selected_style=selected_tab_style),
-        dcc.Tab(label='NPS Rater', value='tab-3', style=tab_style, selected_style=selected_tab_style, children=[
-            dcc.Input(id='input-1', type='text', placeholder='Enter text...', style={'width': '50%', 'height': '5%','fontSize': '15px'}),
+        dcc.Tab(label='Introduction', value='tab-1',style=tab_style, selected_style=selected_tab_style),
+        dcc.Tab(label='Overview of Data', value='tab-2',style=tab_style, selected_style=selected_tab_style),
+        dcc.Tab(label = 'Promoter Analysis', value = 'tab-3', style=tab_style, selected_style=selected_tab_style),
+        dcc.Tab(label = 'Detractor Analysis', value = 'tab-4', style=tab_style, selected_style=selected_tab_style),
+        dcc.Tab(label='NPS Rater', value='tab-5', style=tab_style, selected_style=selected_tab_style, children=[
+            html.H2("Review Analyzer", style = header2_style),
+            dcc.Input(id='input-1', type='text', placeholder='Enter Review Here... ', style={'width': '50%', 'height': '8%','fontSize': '15px'}),
             html.Button('Submit', id='submit-button', n_clicks=0),
             html.Div(id='output-div-1', style={'fontSize': '20px'})
         ]),
-        dcc.Tab(label='Credits', value = 'tab-4',style=tab_style, selected_style=selected_tab_style)
+        dcc.Tab(label='Credits', value = 'tab-6',style=tab_style, selected_style=selected_tab_style)
     ]),
     html.Div(id='tabs-content')
 ])
@@ -119,21 +424,106 @@ app.layout = html.Div([
 def render_content(tab):
     if tab == 'tab-1':
         return html.Div([
-            html.H1("SentimentPro"),
-            html.P('To create an innovative system that harnesses advanced natural language processing techniques to analyse customer feedback from various platforms, to improve GXS bank services. Transform raw, qualitative feedback into actionable quantitative data, enabling targeted improvements in service offerings.')
+            html.H1("SentimentPro", style = header1_style),
+            html.Div([
+                html.H2("SentimentPro Overview:", style = header2_style),
+                html.P("To create an innovative system that harnesses advanced natural language processing techniques to analyse customer feedback from various platforms, to improve GXS bank services. Transform raw, qualitative feedback into actionable quantitative data, enabling targeted improvements in service offerings.",
+                       style = para_style),
+            ]),
+
+            html.Div([
+                html.H2("Background Information", style = header2_style),
+                html.P("Data was scraped from sources including: Apple App Store and Google Play Store",
+                       style = para_style),
+            ]),
+            
+            html.Div([
+                html.H2("Dashboard Navigation", style = header2_style),
+                html.Div([
+                    html.H3("Introduction", style = header3_style),
+                    html.P("Provides overview of this dashboard and instructions on how to navigate",
+                           style = para_style),
+                ]),
+                html.Div([
+                    html.H3("Overview of Data", style = header3_style),
+                    html.P("Provides an analysis of GXS App reviews",
+                           style = para_style),
+                ]),
+                html.Div([
+                    html.H3("Promoter Analysis", style = header3_style),
+                    html.P("A summary of Positive feedback regarding GXS",
+                           style = para_style),
+                ]),
+                html.Div([
+                    html.H3("Detractor Analysis", style = header3_style),
+                    html.P("A summary of Negative feedback regarding GXS",
+                           style = para_style),
+                ]),
+                html.Div([
+                    html.H3("NPS Scorer", style = header3_style),
+                    html.P("The NPS Scorer section allows users to input new reviews for the GXS Bank app. Upon submission, the system not only provides an NPS (Net Promoter Score) for the review but also offers insightful suggestions for improvement based on the feedback",
+                           style = para_style),
+                ]),
+                html.Div([
+                    html.H3("Credits", style = header3_style),
+                    html.P("Acknowledgements and References", style = para_style),
+                ]),
+            ]),
+            html.Div([
+                html.Button("Credits", id="credits-button"),
+            ])
         ])
     elif tab == 'tab-2':
         return html.Div([
-            html.H2("Graphs and Charts"),
+            html.H1("Graphical Insights", style = header2_style),
+            html.P("Add in some basic analysis and/or statistics?"),
             dcc.Graph(figure=bar_nps_cat),
+            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
             dcc.Graph(figure=bar_nps_indiv),
+            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
             dcc.Graph(figure=nps_topic),
-            dcc.Graph(figure=topic_frequency_graph),
-            dcc.Graph(figure=detractor_review_list_graph)
+            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
+            dcc.Graph(figure=main_topic_graph)
+        ])
+    elif tab == 'tab-3':
+        return html.Div([
+            html.H1("Analysis of Promoter Data", style = header2_style),
+            dcc.Graph(figure=topic_frequency_promoter_graph),
+            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
+            dcc.Graph(figure=promoter_review_list_graph)
         ])
     elif tab == 'tab-4':
         return html.Div([
-            html.P("SentimentPro was built by DSA3101 Team DKLAN")
+            html.H1("Analysis of Detractor Data", style = header2_style),
+            dcc.Graph(figure=topic_frequency_detractor_graph),
+            html.Hr(style={'border-top': '1px dashed black', 'margin': '10px'}),  # Dashed divider line
+            dcc.Graph(figure=detractor_review_list_graph)
+        ])
+
+    elif tab == 'tab-6':
+        return html.Div([
+            html.H1("Credits", style = header2_style),
+            html.Div([
+                html.H3("Development Team", style = header3_style),
+                html.Ul([
+                    html.Li("Front End: Aiko Liana Amran | Denise Teh Kai Xin | Low Jia Li Natalie | Ng Yee Gee Kiley"),
+                    html.Li("Back End: Anthea Ang Qiao En | Chan Wan Xin , Lydia | Lucia Pan Yucheng | Neleh Tok Ying Yun")
+                ])
+            ]),
+            html.Div([
+                html.H3("Stakeholders", style = header3_style),
+                html.Ul([
+                    html.Li("Team DKLAN"),
+                    html.Li("GXS Customer Experience and Business Bevelopment Team"),
+                    html.Li("DSA3101 Teaching Team")
+                ])
+            ]),
+            html.Div([
+                html.H3("Special Thanks", style = header3_style),
+                html.Ul([
+                    html.Li("Opensource community & Model creators")
+                ])
+            ])
         ])
 
 @app.callback(
@@ -143,11 +533,36 @@ def render_content(tab):
 )
 def update_output(n_clicks, sentence):
     if n_clicks > 0 and sentence is not None:
-        count_a = count_letter_a(sentence)
-        return f'Number of "a"s: {count_a}'
+        nps_score_output = nps_score(sentence)
+        nps_category_output = nps_cat(sentence)
+        nps_review_output = review_analysis(sentence)
+        
+        # Split the review analysis into paragraphs
+        paragraphs = nps_review_output.split('\n\n')
+        
+        # Create a list of HTML div elements for each paragraph
+        review_divs = [html.Div(paragraph, style={'margin-top': '20px','fontSize': '14px',}) for paragraph in paragraphs]
+        
+        # Combine the review divs with NPS score and category
+        output_content = [
+            html.Div(f"Summary of review:", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-bottom': '10px', 'color': '#444454'}),
+            *review_divs,
+            html.Div(f"NPS Score: {nps_score_output}/10", style={'fontSize': '16px','fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-top': '20px', 'color': '#444454'}),
+            html.Div(f"Category: {nps_category_output}", style={'fontSize': '16px','fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-top': '10px', 'color': '#444454'})
+        ]
+        n_intervals = 0
+        return output_content
     else:
         return ''
-    
+
+@app.callback(
+    dash.dependencies.Output('credits-button', 'n_clicks'),
+    [dash.dependencies.Input('credits-button', 'n_clicks')]
+)
+def navigate_to_credits_tab(n_clicks):
+    # Implement code to navigate to the credits tab
+    return n_clicks
+
 
 # Run the server
 if __name__ == '__main__':
