@@ -1,0 +1,68 @@
+/* styles.css */
+
+/* Header styles */
+h1 {
+    color: #336699;  /* Change to the color you prefer */
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+}
+
+h2 {
+    font-size: 20px;
+    color: #444454;
+}
+
+h3 {
+    font-size: 16px;
+    color: #444454;
+}
+
+/* Paragraph styles */
+p {
+    font-size: 14px;
+    color: #2f2f33;
+}
+
+/* Tabs styles */
+.Dash > .dash-tabswrap > .dash-tabs > .dash-tab {
+    background-color: #0c0121; /* Set background color of tabs */
+    color: #f9f9f7;           /* Set text color of tabs */
+    border: none;              /* Remove border from tabs */
+    font-weight: bold;         /* Set font weight of tabs */
+    font-size: 16px;           /* Set font size of tab text */
+    font-family: 'Courier New', serif;  /* Set font family */
+    padding: 10px;             /* Set padding of tabs */
+}
+
+.Dash > .dash-tabswrap > .dash-tabs > .dash-tab.dash-tab--selected {
+    background-color: #8929d7; /* Set background color of selected tab */
+    color: black;              /* Set text color of selected tab */
+    border: none;              /* Remove border from selected tab */
+}
+
+/* Submit button styles */
+#submit-button {
+    background-color: #8929d7; /* Set background color of submit button */
+    color: white;              /* Set text color of submit button */
+    border: none;              /* Remove border from submit button */
+    padding: 10px 20px;        /* Set padding of submit button */
+    font-size: 16px;           /* Set font size of submit button text */
+    font-family: 'Courier New', serif;  /* Set font family */
+    cursor: pointer;           /* Change cursor to pointer on hover */
+}
+
+#submit-button:hover {
+    background-color: #6a1a9b; /* Change background color on hover */
+}
+
+/* Output div styles */
+#output-div-1 {
+    font-size: 20px;
+}
+
+/* Divider line styles */
+hr {
+    border-top: 1px dashed black; /* Set style of divider line */
+    margin: 10px 0;               /* Set margin above and below the line */
+}
