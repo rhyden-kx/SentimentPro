@@ -28,8 +28,6 @@ import time
 
 # DATA PREPERATION
 
-os.chdir('C:/Users/rhyde')
-
 # Read CSV files
 appStore = pd.read_csv('AppStoreData.csv')
 googlePlay = pd.read_csv('PlayStoreData.csv')
