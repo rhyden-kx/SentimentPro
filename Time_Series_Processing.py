@@ -2,7 +2,26 @@ import dash
 import plotly.express as px
 import pandas as pd
 import random
+import os
 
+#Change Directory:
+os.chdir('C:/Users/rhyde/SentimentPro/Data')
+
+# Read CSV files
+nps_df = pd.read_csv('nps_df.csv')
+topics_df = pd.read_csv('TopicsofReviews.csv')
+score_df = pd.read_csv('score_df.csv')
+app_responsiveness = pd.read_csv('App Responsiveness.csv')
+competition = pd.read_csv('Competition.csv')
+credit_card = pd.read_csv('Credit card usage.csv')
+customer_service = pd.read_csv('Customer Services.csv')
+customer_trust = pd.read_csv('Customer trust.csv')
+login_account = pd.read_csv('Login & Account Setup.csv')
+money_growth = pd.read_csv('Money Growth (Interest Rates).csv')
+safety = pd.read_csv('Safety.csv')
+service_products = pd.read_csv('Services & Products.csv')
+user_interface = pd.read_csv('User Interface.csv')
+data = pd.read_csv('combined_data.csv')
 
 
 def preprocess(data, df):
@@ -30,6 +49,7 @@ def preprocess(data, df):
     return merged
 
 
+
 def plot_top_n_issues_time_series(merged_data, top_n=5):
     # Create a time series line plot
     grouped_data = merged_data.groupby(['date_only', 'issue']).size().reset_index(name='count')
@@ -51,7 +71,8 @@ def plot_top_n_issues_time_series(merged_data, top_n=5):
     monthly_data_topn = monthly_data[monthly_data['issue'].isin(top_issues)]
 
     # Convert 'month_year' to string format
-    monthly_data_topn.loc[:, 'month_year'] = monthly_data_topn['month_year'].astype(str)
+    monthly_data_topn.loc[:, 'month_year'] = monthly_data_topn['month_year'].dt.strftime('%Y-%m')
+
 
     # Create a time series line plot
     fig = px.line(monthly_data_topn, x='month_year', y='count', color='issue', title=f'Number of Reviews by Top {top_n} Issues Over Time')
@@ -62,4 +83,8 @@ def plot_top_n_issues_time_series(merged_data, top_n=5):
     fig.update_xaxes(title_text='Month')
     fig.update_yaxes(title_text='Number of Reviews')
     fig.update_yaxes(fixedrange=True)
-    fig.show()
+    return fig
+
+clean_app_responsiveness = preprocess(data, app_responsiveness)
+plot_top_n_issues_time_series(clean_app_responsiveness, top_n=3)
+
