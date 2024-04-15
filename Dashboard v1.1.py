@@ -3,6 +3,7 @@ import json
 import random
 import dash
 import dash_bootstrap_components as dbc
+from dash import dash_table
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
@@ -254,6 +255,7 @@ safety = pd.read_csv('Safety.csv')
 service_products = pd.read_csv('Services & Products.csv')
 user_interface = pd.read_csv('User Interface.csv')
 data = pd.read_csv('combined_data.csv')
+solutions_df = pd.read_csv('Solutions.csv')
 
 # Test
 topics_issues = ['', 'App Responsiveness', 'Competition', 'Credit Card Usage', 'Customer Services', 'Customer Trust',
@@ -368,7 +370,12 @@ def plot_top_n_issues_time_series(merged_data):
     return fig
 
 
-
+def select_related_solutions(topic, df):
+    # Filter the DataFrame based on the provided topic
+    selected_df = df[df['Topic'] == topic]
+    # Drop the 'Topic' column as it's no longer needed
+    selected_df = selected_df.drop(columns=['Topic'])
+    return selected_df
 
 
 # NPS Rater Page
@@ -575,6 +582,8 @@ dashboard_layout = html.Div(
 
 data_issues = pd.read_csv('combined_data.csv')
 topic_df_issues = pd.read_csv('topics_review.csv')
+
+
 # Issues page layout
 issues_layout = html.Div(
     [
@@ -594,6 +603,7 @@ issues_layout = html.Div(
             value=topics_issues[0],
         ),
         dcc.Graph(id="issues-line-chart"),
+        html.Div(id='issues-table-container')  # Container for the table
     ]
 )
 
@@ -744,17 +754,18 @@ def serialize_figure(fig):
     return fig_dict
 
 @app.callback(
-    Output("issues-line-chart", "figure"),
+    [Output("issues-line-chart", "figure"),
+     Output('issues-table-container', 'children')],  # Add output for the table
     [Input("topic-dropdown", "value"),
-    Input('date_picker_range', 'start_date'),
-    Input('date_picker_range', 'end_date')]
+     Input('date_picker_range', 'start_date'),
+     Input('date_picker_range', 'end_date')]
 )
 def update_issues_page(topic, start_date, end_date):
     if not topic:  # Check if topic is None or empty string
-        # Return default graph
+        # Return default graph and an empty table
         default_fig = plot_default_graph()
         update_date_range(default_fig, start_date, end_date)
-        return serialize_figure(default_fig)  # Serialize Figure manually
+        return serialize_figure(default_fig), html.Div()
     else:
         # Define a dictionary mapping topics to their respective DataFrames
         topic_to_df = {
@@ -774,17 +785,24 @@ def update_issues_page(topic, start_date, end_date):
         df = topic_to_df[topic]
         cleaned_df = preprocess(data_issues, df)
         # Call plot_top_n_issues_time_series function to generate the figure
+        # Get the DataFrame of related issues and solutions for the selected topic
+        related_issues_df = select_related_solutions(topic,solutions_df)
+        
+        # Generate the graph
         fig = plot_top_n_issues_time_series(cleaned_df)
         update_date_range(fig, start_date, end_date)
-        return serialize_figure(fig)  # Serialize Figure manually
-    
-
-
-
-
-
-
-
+        
+        # Generate the table
+        table = dash_table.DataTable(
+            id='issues-table',
+            columns=[{"name": i, "id": i} for i in related_issues_df.columns],
+            data=related_issues_df.to_dict('records'),
+            style_table={'borderRadius': '15px'},  # Apply rounded edges to the table
+            style_header={'backgroundColor': 'rgb(230, 230, 230)', 'fontWeight': 'bold'},
+            style_cell={'textAlign': 'left', 'padding': '5px'}
+        )
+        
+        return serialize_figure(fig), table  # Return both the graph and the table
 
 
 @app.callback(
