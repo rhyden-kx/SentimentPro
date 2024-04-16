@@ -1,39 +1,37 @@
 import os
+import json
+import random
 import dash
 import dash_bootstrap_components as dbc
+from dash import dash_table
+from dash.dash_table.Format import Group
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
+from dash_bootstrap_templates import load_figure_template
 from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.express as px
-import random
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+load_figure_template("darkly")
 
-#nps_scores_code
-analyzer = SentimentIntensityAnalyzer()
 
+# Set Directory (For Local version only)
 os.chdir("C:/Users/rhyde/SentimentPro/Data")
 
+# Read Data
+
+## Dashboard Page:
 topics_df = pd.read_csv('TopicsofReviews.csv')
 nps_df = pd.read_csv('nps_df.csv')
 score_df = pd.read_csv('score_df.csv')
 date_df = pd.read_csv('combined_data.csv')
 
-app_responsiveness = pd.read_csv('App Responsiveness.csv')
-competition = pd.read_csv('Competition.csv')
-credit_card = pd.read_csv('Credit card.csv')
-customer_service = pd.read_csv('Customer Services.csv')
-customer_trust = pd.read_csv('Customer trust.csv')
-login_account = pd.read_csv('Login & Account Setup.csv')
-money_growth = pd.read_csv('Money Growth (Interest Rates).csv')
-safety = pd.read_csv('Safety.csv')
-service_products = pd.read_csv('Services & Products.csv')
-user_interface = pd.read_csv('User Interface.csv')
-data = pd.read_csv('combined_data.csv')
-
+import pandas as pd
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+analyzer = SentimentIntensityAnalyzer()
 
 # Wrap function to read and edit CSV files
 def process_csv(csv_file):
@@ -148,8 +146,6 @@ def topic_nps(topic_df, start_date, end_date):
 #data.shape
 #topic_nps(data, data['Date'].min(), data['Date'].max())
 
-
-
 def issue_nps(topic_df, start_date, end_date):
     # filter by date
     filtered_df = topic_df[(topic_df['Date'] >= start_date) & (topic_df['Date'] <= end_date)]
@@ -180,8 +176,6 @@ def issue_nps(topic_df, start_date, end_date):
 #issue_df = issue_nps(data, data['Date'].min(), data['Date'].max())
 #issue_df
 
-
-
 # list out csv file names
 topics_csv = ['App Responsiveness.csv', 'Competition.csv', 'Credit card usage.csv', 'Customer Services.csv', 'Customer trust.csv', 
               'Login & Account Setup.csv', 'Money Growth (Interest Rates).csv', 'Safety.csv', 'Services & Products.csv', 'User Interface.csv']
@@ -191,120 +185,73 @@ topics = ['App Responsiveness', 'Competition', 'Credit card usage', 'Customer Se
           'Money Growth (Interest Rates)', 'Safety', 'Services & Products', 'User Interface']
 
 
+#Function to return data for 3 NPS categories
+def category_tables(cat):
+    cat_df = score_df[score_df['nps_category'] == cat]
+    topic_frequency = cat_df['Topic_Name'].value_counts()
+    topic_frequency_df = pd.DataFrame({'Topic_Name': topic_frequency.index, 'Frequency': topic_frequency.values})
+    
+    fig_freq = go.Figure(data=[go.Table(
+        columnorder=[1, 2],
+        columnwidth=[80, 40],
+        header=dict(values=list(topic_frequency_df),
+                    align='left',
+                    fill_color='#0c0121',  # Purple header text
+                    font=dict(color='#ba84fc', size=20, family='Arial'),  # Header text style
+                    height=40),  # Header height
+        cells=dict(values=[topic_frequency_df.Topic_Name, topic_frequency_df.Frequency],
+                   align='left',
+                   fill=dict(color='#444454'),  # Cell background color
+                   font=dict(color='#fafaf9', size=15, family='Arial'),  # Cell text style
+                   height=30))  # Cell height
+    ])
+    
+    fig_freq.update_layout(title=f"Most Frequent Topics for {cat}",
+                           paper_bgcolor='#333333',  # Dark background color
+                           plot_bgcolor='#333333',  # Dark background color
+                           margin=dict(l=20, r=20, t=40, b=20))  # Set margins
+    
+    return fig_freq
 
-#NPS Scoring
-#VADER
-
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-analyzer = SentimentIntensityAnalyzer()
-
-#nps_scoring
-#vader function
-#2. Output should be: nps_indiv, nps_category, topic (?) from the score_df ?
-
-def nps_score(review) :
-    vs = analyzer.polarity_scores(review)
-    pos_score = vs['pos']
-    neg_score = vs['neg']
-    neu_score = vs['neu']
-    comp_score = vs['compound']
-    nps_indv = -1
-    #mapping
-    if -1 <= vs['compound'] <= -9/11:
-        nps_indiv = 0
-    elif -9/11 < vs['compound'] <= -7/11:
-        nps_indiv = 1
-    elif -7/11 < vs['compound'] <= -5/11:
-        nps_indiv = 2
-    elif -5/11 < vs['compound'] <= -3/11:
-        nps_indiv = 3
-    elif -3/11 < vs['compound'] <= -1/11:
-        nps_indiv = 4
-    elif -1/11 < vs['compound'] <= 1/11:
-        nps_indiv = 5
-    elif 1/11 < vs['compound'] <= 3/11:
-        nps_indiv = 6
-    elif 3/11 < vs['compound'] <= 5/11:
-        nps_indiv = 7
-    elif 5/11 < vs['compound'] <= 7/11:
-        nps_indiv = 8
-    elif 7/11 < vs['compound'] <= 9/11:
-        nps_indiv = 9
-    else:
-        nps_indiv = 10
-    return nps_indiv
-
-
-#nps category
-def nps_cat(review) :
-    nps_indiv = nps_score(review)
-    cat = ""
-    if nps_indiv >= 9:  # Promoters
-        cat = 'Promoter'
-    elif nps_indiv >= 7:  # Passives
-        cat = 'Passive'
-    else:  # Detractors
-        cat = 'Detractor'
-    return cat
-
-
-import os
-
-
-API_KEY = "sk-ms7SU43E34tS9UJks5RD2KM3m1JumOR2pM73Dk95VzKjM6TZ"
-
-API_KEY = API_KEY or os.getenv("H2O_GPT_E_API_KEY")
-
-if not API_KEY:
-    raise ValueError("Please configure h2ogpte API key")
-
-REMOTE_ADDRESS = "https://h2ogpte.genai.h2o.ai"
-
-from h2ogpte import H2OGPTE
-
-client = H2OGPTE(address=REMOTE_ADDRESS, api_key=API_KEY)
-
-#data extraction
-def review_analysis(review):
-    extract = client.extract_data(
-        text_context_list= [review],
-        #pre_prompt_extract="Pay attention and look at all people. Your job is to collect their names.\n",
-        prompt_extract="List the good thing and suggestions for improvement. Ignore grammatical errors and awkward languages"
-    )
-    # List of LLM answers per text input
-    extracted_text_list = ''
-    for extract_list_item in extract.content:
-        for s in extract_list_item.split("\n"):
-            extracted_text_list += s + '\n\n'
-    return(extracted_text_list)
+def review_tables(cat):
+    cat_df = score_df[score_df['nps_category'] == cat]
+    topic_frequency = cat_df['Topic_Name'].value_counts()
+    most_cat = topic_frequency.nlargest(3).index
+    cat_review_list = pd.DataFrame(columns=score_df.columns)
+    for topic in most_cat:
+        topic_df = cat_df[cat_df['Topic_Name'] == topic].copy()  # Explicitly create a copy
+        topic_df['Review_Length'] = topic_df['Review'].apply(len)  # Add a column for review length
+        longest_reviews = topic_df.nlargest(3, 'Review_Length')  # Select the largest 3 based on review length
+        cat_review_list = pd.concat([cat_review_list, longest_reviews])
+    cat_review_list_display = cat_review_list[['Review', 'Topic_Name']]
+    
+    fig_review = go.Figure(data=[go.Table(
+        columnorder=[1, 2],
+        columnwidth=[80, 40],
+        header=dict(values=list(cat_review_list_display),
+                    align='left',
+                    fill_color='#0c0121',  # Purple header text
+                    font=dict(color='#ba84fc', size=20, family='Arial'),  # Header text style
+                    height=40),  # Header height
+        cells=dict(values=[cat_review_list.Review, cat_review_list.Topic_Name],
+                   align='left',
+                   fill=dict(color='#444454'),  # Cell background color
+                   font=dict(color='#fafaf9', size=15, family='Arial'),  # Cell text style
+                   height=30))  # Cell height
+    ])
+    
+    fig_review.update_layout(title=f"Top 9 Reviews for {cat}",
+                             paper_bgcolor='#333333',  # Dark background color
+                             plot_bgcolor='#333333',  # Dark background color
+                             margin=dict(l=20, r=20, t=40, b=20))  # Set margins
+    
+    return fig_review
 
 
-topic_df = pd.read_csv('./TopicsofReviews.csv')
-date_df = pd.read_csv('./combined_data.csv')
-
-# merge dfs into data
-data = date_df.merge(topic_df, on='review', how='inner')
-
-# clean date
-data['date_clean'] = pd.to_datetime(data['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
-data['date_clean'] = data['date_clean'].combine_first(pd.to_datetime(data['date'], format='%Y-%m-%dT%H:%M:%S.%fZ', errors='coerce'))
-
-# sanity check that all dates are cleaned
-# sum(data['date_clean'].isnull())# should output 0
-
-data['date_clean'] = data['date_clean'].astype(str)
-data['date_clean'] = data['date_clean'].str[:10]
-data['date_clean'] = pd.to_datetime(data['date_clean']).dt.date    
-
-# select columns needed
-df = data[['review', 'date_clean', 'Topic_Name', 'Topic_Number']]
-
-
-data = pd.read_csv('combined_data.csv')
-topic_df = pd.read_csv('topics_review.csv')
+# Issues Page
 def plot_default_graph():
     # Merge the dataframes
-    all_data = data.merge(topic_df, on='review', how='inner')
+    all_data = data.merge(topic_df_issues, on='review', how='inner')
 
     # Clean the date
     all_data['date_clean'] = pd.to_datetime(all_data['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
@@ -353,7 +300,7 @@ def plot_default_graph():
 
 def get_date_range():
     # Merge the dataframes
-    all_data = data.merge(topic_df, on='review', how='inner')
+    all_data = data.merge(topic_df_issues, on='review', how='inner')
 
     # Clean the date
     all_data['date_clean'] = pd.to_datetime(all_data['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
@@ -364,10 +311,21 @@ def get_date_range():
     max_date = all_data.date_clean.max()
     return [min_date, max_date]
 
-
+app_responsiveness = pd.read_csv('App Responsiveness.csv')
+competition = pd.read_csv('Competition.csv')
+credit_card = pd.read_csv('Credit card.csv')
+customer_service = pd.read_csv('Customer Services.csv')
+customer_trust = pd.read_csv('Customer trust.csv')
+login_account = pd.read_csv('Login & Account Setup.csv')
+money_growth = pd.read_csv('Money Growth (Interest Rates).csv')
+safety = pd.read_csv('Safety.csv')
+service_products = pd.read_csv('Services & Products.csv')
+user_interface = pd.read_csv('User Interface.csv')
+data = pd.read_csv('combined_data.csv')
+solutions_df = pd.read_csv('Solutions.csv')
 
 # Test
-topics = ['', 'App Responsiveness', 'Competition', 'Credit Card Usage', 'Customer Services', 'Customer Trust',
+topics_issues = ['', 'App Responsiveness', 'Competition', 'Credit Card Usage', 'Customer Services', 'Customer Trust',
           'Login & Account Setup', 'Money Growth (Interest Rates)', 'Safety', 'Service Products', 'User Interface']
 
 datasets = {
@@ -419,29 +377,30 @@ for topic, df in datasets.items():
     top_issues = issue(data, df)
     issues[topic] = top_issues
 
-    def preprocess(data, df):
-        # Merge the two DataFrames on the 'review' column
-        merged = pd.merge(data, df, on='review', how='inner')
 
-        # Drop the 'Unnamed: 0' column
-        merged.drop(columns=['Unnamed: 0'], inplace=True)
+def preprocess(data, df):
+    # Merge the two DataFrames on the 'review' column
+    merged = pd.merge(data, df, on='review', how='inner')
 
-        # Rename the 'key' column to 'issue'
-        merged.rename(columns={'key': 'issue'}, inplace=True)
+    # Drop the 'Unnamed: 0' column
+    merged.drop(columns=['Unnamed: 0'], inplace=True)
 
-        # Convert 'date' column to datetime format
-        merged['date'] = pd.to_datetime(merged['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
+    # Rename the 'key' column to 'issue'
+    merged.rename(columns={'key': 'issue'}, inplace=True)
 
-        # If the previous conversion fails, try a different format
-        merged['date'] = merged['date'].combine_first(pd.to_datetime(merged['date'], format='%Y-%m-%dT%H:%M:%S.%fZ', errors='coerce'))
+    # Convert 'date' column to datetime format
+    merged['date'] = pd.to_datetime(merged['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
 
-        # Convert 'date' column to string
-        merged['date'] = merged['date'].astype(str)
+    # If the previous conversion fails, try a different format
+    merged['date'] = merged['date'].combine_first(pd.to_datetime(merged['date'], format='%Y-%m-%dT%H:%M:%S.%fZ', errors='coerce'))
 
-        # Extract date only (YYYY-MM-DD)
-        merged['date_only'] = merged['date'].str[:10]
+    # Convert 'date' column to string
+    merged['date'] = merged['date'].astype(str)
 
-        return merged
+    # Extract date only (YYYY-MM-DD)
+    merged['date_only'] = merged['date'].str[:10]
+
+    return merged
 
 def plot_top_n_issues_time_series(merged_data):
     # Create a time series line plot
@@ -478,14 +437,69 @@ def plot_top_n_issues_time_series(merged_data):
     return fig
 
 
+def select_related_solutions(topic, df):
+    # Filter the DataFrame based on the provided topic
+    selected_df = df[df['Topic'] == topic]
+    # Drop the 'Topic' column as it's no longer needed
+    selected_df = selected_df.drop(columns=['Topic'])
+    return selected_df
+
+
+# NPS Rater Page
+
+API_KEY = "sk-ms7SU43E34tS9UJks5RD2KM3m1JumOR2pM73Dk95VzKjM6TZ"
+
+API_KEY = API_KEY or os.getenv("H2O_GPT_E_API_KEY")
+
+if not API_KEY:
+    raise ValueError("Please configure h2ogpte API key")
+
+REMOTE_ADDRESS = "https://h2ogpte.genai.h2o.ai"
+
+from h2ogpte import H2OGPTE
+
+client = H2OGPTE(address=REMOTE_ADDRESS, api_key=API_KEY)
+
+#data extraction
+def review_analysis(review):
+    extract = client.extract_data(
+        text_context_list= [review],
+        #pre_prompt_extract="Pay attention and look at all people. Your job is to collect their names.\n",
+        prompt_extract="List the good thing and suggestions for improvement. Ignore grammatical errors and awkward languages"
+    )
+    # List of LLM answers per text input
+    extracted_text_list = ''
+    for extract_list_item in extract.content:
+        for s in extract_list_item.split("\n"):
+            extracted_text_list += s + '\n\n'
+    return(extracted_text_list)
+
+analyzer = SentimentIntensityAnalyzer()
+def nps_score(review):
+    vs = analyzer.polarity_scores(review)
+    nps_indiv = round((vs['compound'] + 1) * 5)
+    return min(max(nps_indiv, 0), 10)
+
+def nps_cat(review):
+    nps_indiv = nps_score(review)
+    if nps_indiv >= 9:
+        return 'Promoter'
+    elif nps_indiv >= 7:
+        return 'Passive'
+    else:
+        return 'Detractor'
+
+
+
+# DASH APP
 
 # Dash app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY], suppress_callback_exceptions=True)
 
 # Sidebar
 sidebar = html.Div(
     [
-        html.H2("SentimentPro", className="display-4", style={"font-size": "2rem"}),
+        html.H2("SentimentPro", className="display-4", style={"font-size": "2rem", "color":"#941cfa"}),
         html.Hr(),
         dbc.Nav(
             [
@@ -514,7 +528,7 @@ content = html.Div(
 # NPS Scores page layout
 nps_scores_layout = html.Div(
     [
-        html.H1("Net Promoter Score (NPS) Analysis"),
+        html.H1("Net Promoter Score (NPS) Analysis", style = {"color":"#ba84fc"}),
         html.P("Click on a bar in the graph below to see NPS scores by issues for that topic."),
         dcc.DatePickerRange(
             id='date-range-picker',
@@ -523,14 +537,15 @@ nps_scores_layout = html.Div(
             display_format='YYYY-MM-DD'
         ),
         dcc.Graph(id='nps-by-topic-graph'),
-        html.Div(id='drill-down-container')
+        html.Div(id='drill-down-container'),
+        dcc.Graph(id='drill-down-graph')
     ]
 )
 
 # Dashboard page layout with tabs
 dashboard_layout = html.Div(
     [
-        html.H1("Dashboard"),
+        html.H1("Dashboard",style = {"color":"#ba84fc"}),
         dbc.Tabs(
             [
                 dbc.Tab(
@@ -539,104 +554,71 @@ dashboard_layout = html.Div(
                 ),
                 dbc.Tab(
                     [
-                        html.H3("Good"),
+                        html.H3("Promoters"),
                         dbc.Row(
                             [
-                                dbc.Col(
-                                    dcc.Graph(
-                                        id="good-line-chart",
-                                        figure={
-                                            "data": [go.Scatter(x=[1, 2, 3], y=[4, 1, 2], mode="lines")],
-                                            "layout": go.Layout(title="Good Line Chart"),
-                                        },
-                                    ),
-                                    width=6,
+                                dcc.Graph(
+                                    id="Promoter Frequency",
+                                    figure=category_tables("Promoter"),
                                 ),
-                                dbc.Col(
-                                    dcc.Graph(
-                                        id="good-bar-chart",
-                                        figure={
-                                            "data": [go.Bar(x=[1, 2, 3], y=[4, 1, 2])],
-                                            "layout": go.Layout(title="Good Bar Chart"),
-                                        },
-                                    ),
-                                    width=6,
+                                dcc.Graph(
+                                    id="Promoter Review",
+                                    figure=review_tables("Promoter"),
                                 ),
                             ]
                         ),
                     ],
-                    label="Good",
+                    label="Promoter",
                 ),
                 dbc.Tab(
                     [
-                        html.H3("Bad"),
+                        html.H3("Detractors"),
                         dbc.Row(
                             [
-                                dbc.Col(
-                                    dcc.Graph(
-                                        id="bad-line-chart",
-                                        figure={
-                                            "data": [go.Scatter(x=[1, 2, 3], y=[4, 1, 2], mode="lines")],
-                                            "layout": go.Layout(title="Bad Line Chart"),
-                                        },
-                                    ),
-                                    width=6,
+                                dcc.Graph(
+                                    id="Detractor Frequency",
+                                    figure=category_tables("Detractor"),
                                 ),
-                                dbc.Col(
-                                    dcc.Graph(
-                                        id="bad-bar-chart",
-                                        figure={
-                                            "data": [go.Bar(x=[1, 2, 3], y=[4, 1, 2])],
-                                            "layout": go.Layout(title="Bad Bar Chart"),
-                                        },
-                                    ),
-                                    width=6,
+                                dcc.Graph(
+                                    id="Detractor Review",
+                                    figure=review_tables("Detractor"),
                                 ),
                             ]
                         ),
                     ],
-                    label="Bad",
+                    label="Detractor",
                 ),
                 dbc.Tab(
                     [
-                        html.H3("Neutral"),
+                        html.H3("Passive"),
                         dbc.Row(
                             [
-                                dbc.Col(
-                                    dcc.Graph(
-                                        id="neutral-line-chart",
-                                        figure={
-                                            "data": [go.Scatter(x=[1, 2, 3], y=[4, 1, 2], mode="lines")],
-                                            "layout": go.Layout(title="Neutral Line Chart"),
-                                        },
-                                    ),
-                                    width=6,
+                                dcc.Graph(
+                                    id="Passive Frequency",
+                                    figure=category_tables("Passive"),
                                 ),
-                                dbc.Col(
-                                    dcc.Graph(
-                                        id="neutral-bar-chart",
-                                        figure={
-                                            "data": [go.Bar(x=[1, 2, 3], y=[4, 1, 2])],
-                                            "layout": go.Layout(title="Neutral Bar Chart"),
-                                        },
-                                    ),
-                                    width=6,
+                                dcc.Graph(
+                                    id="Passive Review",
+                                    figure=review_tables("Passive"),
                                 ),
                             ]
                         ),
                     ],
-                    label="Neutral",
+                    label="Passive",
                 ),
             ]
         ),
     ]
 )
 
+data_issues = pd.read_csv('combined_data.csv')
+topic_df_issues = pd.read_csv('topics_review.csv')
+
 
 # Issues page layout
 issues_layout = html.Div(
     [
-        html.H1("Issues Faced"),
+        html.H1("Issues Faced",style = {"color":"#ba84fc"}),
         html.H3("Select an issue to view details"),
         html.Br(),
         dcc.DatePickerRange(
@@ -648,17 +630,19 @@ issues_layout = html.Div(
         html.Br(),
         dcc.Dropdown(
             id="topic-dropdown",
-            options=[{"label": topic, "value": topic} for topic in topics],
-            value=topics[0],
+            options=[{"label": topic, "value": topic} for topic in topics_issues],
+            value=topics_issues[0],
+            style={'fontColor': '#ebebeb'}  # Apply dark theme style
         ),
         dcc.Graph(id="issues-line-chart"),
+        html.Div(id='issues-table-container')  # Container for the table
     ]
 )
 
 # NPS Rater page layout
 nps_rater_layout = html.Div(
     [
-        html.H1("NPS Rater"),
+        html.H1("NPS Rater",style = {"color":"#ba84fc"}),
         html.H3("Input new reviews here"),
         dcc.Textarea(id="text-input", placeholder="Enter text here...", rows=5, style={"width": "100%"}),
         html.Br(),
@@ -671,7 +655,7 @@ nps_rater_layout = html.Div(
 # Information page layout
 information_layout = html.Div(
     [
-        html.H2("Credits"),
+        html.H2("Credits",style = {"color":"#ba84fc"}),
         html.Div([
             html.H3("Development Team"),
             html.Ul([
@@ -718,7 +702,7 @@ def render_page_content(pathname):
 @app.callback(
     Output('nps-by-topic-graph', 'figure'),
     Input('date-range-picker', 'start_date'),
-    Input('date-range-picker', 'end_date')
+     Input('date-range-picker', 'end_date')
 )
 def update_main_graph(start_date, end_date):
     # get nps score for all topics
@@ -740,34 +724,47 @@ def update_main_graph(start_date, end_date):
     # making the graph itself
     c_scale = ['red', 'orange', 'green']
     fig = px.bar(final_df_sorted, x='Topic', y='NPS', title='NPS Score by Topic', color='NPS',
-                color_continuous_scale=c_scale, color_continuous_midpoint=0)
+                color_continuous_scale = c_scale, color_continuous_midpoint=0)
     fig.update_yaxes(range=[-topic_cap, topic_cap])
     return fig
 
 # Define callback to update drill-down graph
 @app.callback(
-    Output('drill-down-container', 'children'),
+    Output('drill-down-graph', 'figure'),
     Input('nps-by-topic-graph', 'clickData'),
     Input('date-range-picker', 'start_date'),
     Input('date-range-picker', 'end_date')
 )
+
 def update_drill_down_graph(clickData, start_date, end_date):
     if clickData is None:
-        return html.Div()
+        # If no data point is clicked, return an empty figure
+        return {}
     
+    # Get the clicked topic
     topic = clickData['points'][0]['x']
+
+    # get the df of issue nps scores only for the topic clicked
     file_path = f"{topic}.csv"
     data = process_csv(file_path)
     issue_results = issue_nps(data, start_date, end_date)
+
+    # sort by nps 
     issue_results_sorted = issue_results.sort_values(by='NPS', ascending=False)
+
+    # setting the values used to make the axis
     issue_min_nps = issue_results_sorted['NPS'].min()
     issue_max_nps = issue_results_sorted['NPS'].max()
     issue_cap = max(abs(issue_min_nps), abs(issue_max_nps))
+
+    # making the graph itself
     c_scale = ['red', 'orange', 'green']
     fig = px.bar(issue_results_sorted, x='Issue', y='NPS', title=f'NPS Score for {topic} Issues', color='NPS',
                  color_continuous_scale=c_scale, color_continuous_midpoint=0)
     fig.update_yaxes(range=[-issue_cap, issue_cap])
-    return dcc.Graph(figure=fig)
+    
+    return fig
+
 
 def update_date_range(fig, start_date, end_date):
     if start_date is None:
@@ -777,20 +774,32 @@ def update_date_range(fig, start_date, end_date):
     fig.update_xaxes(range=[start_date,end_date])
     return fig
 
+
+def serialize_figure(fig):
+    # Convert Period objects to strings before serializing
+    fig_dict = fig.to_dict()
+    for data_entry in fig_dict['data']:
+        if 'x' in data_entry:
+            data_entry['x'] = [str(period) for period in data_entry['x']]
+        if 'y' in data_entry:
+            if isinstance(data_entry['y'], np.ndarray):
+                data_entry['y'] = data_entry['y'].tolist()
+    return fig_dict
+
 @app.callback(
-    Output("issues-line-chart", "figure"),
+    [Output("issues-line-chart", "figure"),
+     Output('issues-table-container', 'children')],  # Add output for the table
     [Input("topic-dropdown", "value"),
-    Input('date_picker_range', 'start_date'),
-    Input('date_picker_range', 'end_date')]
+     Input('date_picker_range', 'start_date'),
+     Input('date_picker_range', 'end_date')]
 )
-def update_issues_page(topic,start_date,end_date):
+def update_issues_page(topic, start_date, end_date):
     if not topic:  # Check if topic is None or empty string
-        # Return default graph
+        # Return default graph and an empty table
         default_fig = plot_default_graph()
-        update_date_range(default_fig,start_date,end_date)
-        return default_fig
+        update_date_range(default_fig, start_date, end_date)
+        return serialize_figure(default_fig), html.Div()
     else:
-        print(f"Selected topic: {topic}")
         # Define a dictionary mapping topics to their respective DataFrames
         topic_to_df = {
             'App Responsiveness': app_responsiveness,
@@ -807,12 +816,27 @@ def update_issues_page(topic,start_date,end_date):
 
         # Get the DataFrame for the selected topic
         df = topic_to_df[topic]
-        cleaned_df = preprocess(data, df)
+        cleaned_df = preprocess(data_issues, df)
         # Call plot_top_n_issues_time_series function to generate the figure
+        # Get the DataFrame of related issues and solutions for the selected topic
+        related_issues_df = select_related_solutions(topic,solutions_df)
+        
+        # Generate the graph
         fig = plot_top_n_issues_time_series(cleaned_df)
-        update_date_range(fig,start_date,end_date)
-        return fig
-    
+        update_date_range(fig, start_date, end_date)
+        
+        # Generate the table
+        table = dash_table.DataTable(
+            id='issues-table',
+            columns=[{"name": i, "id": i} for i in related_issues_df.columns],
+            data=related_issues_df.to_dict('records'),
+            style_table={'borderRadius': '15px', 'backgroundColor': '#333333'},  # Dark background color
+            style_header={'backgroundColor': '#0c0121', 'fontWeight': 'bold', 'color': '#ba84fc'},  # Purple header text
+            style_cell={'backgroundColor': '#444454','textAlign': 'left', 'padding': '5px', 'color': '#fafaf9'},  # Light text color
+        )
+        
+        return serialize_figure(fig), table  # Return both the graph and the table
+
 
 @app.callback(
     [Output("output-text", "children")],
@@ -834,10 +858,10 @@ def update_output(n_clicks, sentence):
         
         # Combine the review divs with NPS score and category
         nps_output_content = [
-            html.Div("Summary of review:", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-bottom': '10px', 'color': '#444454'}),
+            html.Div("Summary of review:", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-bottom': '10px'}),
             *review_divs,
-            html.Div(f"NPS Score: {nps_score_output}/10", style={'fontSize': '16px','fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-top': '20px', 'color': '#444454'}),
-            html.Div(f"Category: {nps_category_output}", style={'fontSize': '16px','fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-top': '10px', 'color': '#444454'})
+            html.Div(f"NPS Score: {nps_score_output}/10", style={'fontSize': '16px','fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-top': '20px'}),
+            html.Div(f"Category: {nps_category_output}", style={'fontSize': '16px','fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-top': '10px'})
         ]
         
         return [nps_output_content]

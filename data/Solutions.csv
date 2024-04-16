@@ -1,0 +1,127 @@
+﻿Topic,Issue,Solution
+App Responsiveness,Difficulties in account registration,Improve the error messages to provide more information on why the registration is failing.
+App Responsiveness,Difficulties in account registration,"Test the app thoroughly on different devices, including iOS, before rolling it out to ensure smooth service recovery."
+App Responsiveness,Difficulties in account registration,Allow access to funds through a browser as a backup option in case of app failures.
+App Responsiveness,Difficulties in account registration,Provide updates to affected users regarding the progress of issue resolution.
+App Responsiveness,Issues with loan application and approval process,Clarify the criteria for loan approval by listing out the rules and criteria to help applicants.
+App Responsiveness,Bugs and glitches in the app,"Test the app thoroughly on different devices, including iOS, before rolling it out to ensure smooth service."
+App Responsiveness,Slow transfer speed and connectivity problems,Include feature to save payee details
+App Responsiveness,Lack of certain features such as bank transfer,Allow users to save the bank details within the app
+App Responsiveness,Poor customer service,"Test the app thoroughly on different devices, including iOS, before rolling it out to ensure smooth service recovery."
+App Responsiveness,Lack of clear instructions or error messages,Improve the error messages to provide more information on why the registration is failing.
+App Responsiveness,Others,Make clear that roll out is in batches to avoid confusion from users who are unable to sign up
+Competition,Difficulty logging in,Check on Singpass Login feature as multiple user complained about being stuck on login
+Competition,Poor customer service,Have more informative customer service replies
+Competition,Unclear instructions,Improve the error messages to provide more information on why the registration is failing.
+Competition,Issues with Singpass,Check on Singpass Login feature as multiple user complained about being stuck on login
+Competition,Problems with opening the app,"Check on overlap app which is not secure, offer users more explanation"
+Competition,Lack of auto startup,Offer users auto startup of Singpass app
+Competition,Loan application issues,Check handling of Singpass login for loan application
+Competition,Display overlay issues,Offer FAQ page on dual-screen devices as display overlay add-on causes app to be unresponsive
+Competition,Pocket account issues,App auto exit bug (Fixed)
+Competition,Issues with PayNow QR,"Look into Paynow QR functionalities, reports of issues"
+Competition,Others,Look into missing 'next' button for loan application after question on US citizen.
+Credit Card Usage,Difficulties with login forgot password,Inform users about updates on 'Forget Password' issue
+Credit Card Usage,Lack of customer support,Provide more personalized customer support to users
+Credit Card Usage,Poor user experience,Test the app before roll out to test users to improve app quality
+Credit Card Usage,Limited functionality,Provide updates to users regarding the progress of account creation
+Credit Card Usage,Others,Improve security features such as 2FA as users are concerned about app security
+Credit Card Usage,Others,Increase the saving caps to encourage even more savings
+Credit Card Usage,Complaints about staff asking for positive reviews,Investigate issue of inconsistent app reviews content on app store and play store
+Credit Card Usage,Confusion about app authenticity,Provide users with confirmation the app is legitimate such as requiring Singpass login
+Customer Services,Inability to save payments,Allow users to save the bank details within the app
+Customer Services,Issues with GXS apps linked to Grab app,Customers Appreciated functionality of linking GXS to Grab app
+Customer Services,Receiving email invites from GXS,Improve the error messages to provide more information on why the registration is failing.
+Customer Services,Request for SingPass sign in feature,Add function to sign in using singpass password instead of only Singpass app
+Customer Services,Lack of transparency and access to funds,Increase transparency in errors related to fund management
+Customer Services,Authenticity concerns,Provide users with confirmation the app is legitimate such as requiring Singpass login
+Customer Services,Inability to join or open account,Make clear that roll out is in batches to avoid confusion from users who are unable to sign up
+Customer Services,Digital savings bank account issues,"Improve customer support, including live chat feature"
+Customer Services,Digital savings bank account issues,Ensure QR code scanning feature is accurate
+Customer Services,Digital savings bank account issues,Provide clear instructions and reasons for sign-up failures
+Customer Services,Digital savings bank account issues,Add a feature to save payees
+Customer Services,SingPass sign in problems,Improve implementation of Singpass for sign-up process
+Customer Services,App crashing and freezing,Improve app stability to prevent crashes during registration.
+Customer Services,Scan QR code failure,Ensure QR code scanning feature is accurate
+Customer Services,Lack of customer support,Have more informative customer service replies
+Customer Services,Others,Increase server capacity to accommodate more users
+Customer Trust,Difficulty processing application,Provide clear instructions and reasons for sign-up failures
+Customer Trust,Login issues,Have a public update function to inform users when login functionalities are down
+Customer Trust,Crashing freezing,Include FAQ on app crashing reasons and solutions
+Customer Trust,Unable to cancel delete personal details,Offer FAQ page on deleting personal details
+Customer Trust,Misleading advertising,Adjust advertising to accurately display true interest rates
+Customer Trust,Issues with Flexiloan,Increase maximum deposit limit to above 5k
+Customer Trust,Lack of customer support,Provide more personalized customer support to users
+Customer Trust,Unclear error messages,Improve the error messages to provide more information
+Customer Trust,Limited attempts to use the app,Make clear that roll out is in batches to avoid confusion from users who are unable to sign up
+Customer Trust,Difficulty registering and depositing,Include FAQ on app crashing reasons and solutions
+Customer Trust,Confusing interface,Redesign app layout to be more intuitive and user-friendly
+Customer Trust,Limited features,Include feature to save payee details
+Login & Account Setup,Difficulty logging in,Inform users about updates on 'Forget Password' issue
+Login & Account Setup,Unable to set up account,Cannot set up my account in redmi 8T. Reach the email 2FA before I key in the numbers App closed
+Login & Account Setup,Poor customer support,Provide clear instructions and reasons for sign-up failures
+Login & Account Setup,Buggy app,"Test the app thoroughly on different devices, including iOS, before rolling it out to ensure smooth service."
+Login & Account Setup,Issues with forgot password function,Inform users about updates on 'Forget Password' issue
+Login & Account Setup,Frustration with error messages,Improve the error messages to provide more information for each problem
+Login & Account Setup,Singpass registration issues,Check on Singpass Login feature as multiple user complained about being stuck on login
+Login & Account Setup,Inability to use the app on certain devices,Offer FAQ page on incompatability for certain devices
+Login & Account Setup,Delayed email responses,"Improve customer support, including email replies"
+Login & Account Setup,Lack of readiness for users,Test the app thoroughly on different devices before rolling it out to ensure smooth service recovery.
+Login & Account Setup,Others,Make the app accessible for foreigners who want to apply.
+Money Growth (Interest Rates),Low interest rate,Be transparent about interest rate changes and avoid bait-and-switch tactics
+Money Growth (Interest Rates),Poor customer service,"Improve customer support, including email replies"
+Money Growth (Interest Rates),Buggy app,Improve the onboarding process and fix bugs
+Money Growth (Interest Rates),Lack of features,Add basic functions like saving a payee
+Money Growth (Interest Rates),High minimum balance requirement,Increase the savings cap beyond $5000
+Money Growth (Interest Rates),Difficulties in registering,Improve the onboarding process and fix bugs
+Money Growth (Interest Rates),Lack of support for SGQR,Support SGQR and other payment methods
+Money Growth (Interest Rates),Confusing user interface,Update and remove the app's seasonal designs earlier
+Money Growth (Interest Rates),Reduction in interest rates,Be transparent about interest rate changes and avoid bait-and-switch tactics
+Money Growth (Interest Rates),Difficulties in opening the app,Address any bugs or issues that may be causing the app to malfunction or crash
+Money Growth (Interest Rates),Limited availability of high interest rates,Be transparent about interest rate changes and avoid bait-and-switch tactics
+Money Growth (Interest Rates),Long onboarding process,Shorten onboarding processes by including features such as autofill from Singpass
+Money Growth (Interest Rates),Others,Provide clear communication about account closures and reasons behind them
+Money Growth (Interest Rates),Others,Ensure the app is user-friendly and functional before launching.
+Safety,Seamless integration not available on iPad,"Integration issues need to be addressed, including the first-time login requiring SingPass but not generating a QR code"
+Safety,Difficulty opening app,Improve app stability to prevent crashes during registration.
+Safety,Issues with Singpass details,Integration issues with Singpass need to be addressed
+Safety,Poor interface design on mobile,Improve user interface design on mobile such as remove overlapping text
+Safety,Difficulty raising deposit cap,Increase the savings cap beyond $5000
+Safety,Inability to delete fake accounts,Investigate issue of inconsistent app reviews content on app store and play store
+Safety,Confusing account creation process,Provide clear communication to users about any changes or updates to the app or account policies
+Safety,Difficulty reducing transaction amounts,Provide clear communication to users about any changes or updates to the app or account policies
+Safety,Issues with user interface,Allow for adding payees for FAST transfer as a basic online banking service
+Safety,Blank screen issue,Improve implementation of Singpass for sign-up process
+Safety,Difficulty with pull down refresh,Improve the pull-down refresh function to make it feel smoother
+Safety,Others,Address any bugs or issues that may be causing the app to malfunction or crash.
+Service Products,Long waiting list,Fix long waiting list and communication issues regarding waiting list status
+Service Products,Difficulty in signing up,Improve sign-up process and resolve issues with signing up
+Service Products,High interest rates,Be transparent about interest rate changes and avoid bait-and-switch tactics
+Service Products,High interest rates,Increase loan eligibility to include non-Singaporeans
+Service Products,Technical glitches,Ensure accurate scanning and processing of payment QR codes
+Service Products,Technical glitches,"Improve app functionality and user experience (e.g. adding payees, updating app for debit card activation)"
+Service Products,Technical glitches,Provide clear and consistent communication to users (e.g. not asking for app ratings only for certain ratings)
+Service Products,Limited eligibility for loans,Offer FAQ page on inelligibility for non-Singaporeans
+Service Products,Lack of transparency,Easy to apply good full amount of loan given compare to outside or lending bee ... or they never cut your loan amouny . interest can be save if payment early. multiple loan also can.. only it could be better if can increase loan amount after loan given .. or can be resgistet again once deleted.
+Service Products,Redundant features,"Remove redundant features, such as the requirement to set up a password for a phone"
+Service Products,Payment issues,Ensure accurate scanning and processing of payment QR codes
+Service Products,Absence of debit card,"Improve app functionality and user experience (e.g. adding payees, updating app for debit card activation)"
+Service Products,Misleading app behavior,Ensure proper functioning of the app without requiring repeated downloads.
+Service Products,Others,Maintain promised interest rates and avoid reducing them shortly after account opening
+Service Products,Others,Ensure proper functioning of the app without requiring repeated downloads.
+User Interface,Poor login functionality,Check on Singpass Login feature as multiple user complained about being stuck on login
+User Interface,Poor login functionality,Inform users about updates on 'Forget Password' issue
+User Interface,Poor login functionality,Address any bugs or issues that may be causing the app to malfunction or crash
+User Interface,Fingerprint login not working,Address any bugs or issues that may be causing fingerprint login function to malfunction
+User Interface,Unclear error messages,Improve the error messages to provide more information on why the registration is failing.
+User Interface,Terrible user experience,Improve the error messages to provide more information on why the registration is failing.
+User Interface,Lack of transparency,Be transparent in the application selection process
+User Interface,Issues with interest rates,Be transparent about interest rate changes and avoid bait-and-switch tactics
+User Interface,Difficulty in signing up,Offer FAQ page on inelligibility for non-Singaporeans
+User Interface,Compatibility issues,Address compatibility issues with devices
+User Interface,Compatibility issues,Address device personal security concerns
+User Interface,Occasional errors,Provide clear error messages
+User Interface,Delayed response,Improve communication and handling of changes in service
+User Interface,Others,Add the option to save payees
+User Interface,Others,Improve communication and handling of changes in service
+User Interface,Others,Maintain high interest rates after gaining users.
