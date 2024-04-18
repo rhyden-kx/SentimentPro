@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import time
 import dash
 import dash_bootstrap_components as dbc
 from dash import dash_table
@@ -186,66 +187,56 @@ topics = ['App Responsiveness', 'Competition', 'Credit card usage', 'Customer Se
 
 
 #Function to return data for 3 NPS categories
-def category_tables(cat):
-    cat_df = score_df[score_df['nps_category'] == cat]
-    topic_frequency = cat_df['Topic_Name'].value_counts()
-    topic_frequency_df = pd.DataFrame({'Topic_Name': topic_frequency.index, 'Frequency': topic_frequency.values})
-    
-    fig_freq = go.Figure(data=[go.Table(
-        columnorder=[1, 2],
-        columnwidth=[80, 40],
-        header=dict(values=list(topic_frequency_df),
-                    align='left',
-                    fill_color='#0c0121',  # Purple header text
-                    font=dict(color='#ba84fc', size=20, family='Arial'),  # Header text style
-                    height=40),  # Header height
-        cells=dict(values=[topic_frequency_df.Topic_Name, topic_frequency_df.Frequency],
-                   align='left',
-                   fill=dict(color='#444454'),  # Cell background color
-                   font=dict(color='#fafaf9', size=15, family='Arial'),  # Cell text style
-                   height=30))  # Cell height
-    ])
-    
-    fig_freq.update_layout(title=f"Most Frequent Topics for {cat}",
-                           paper_bgcolor='#333333',  # Dark background color
-                           plot_bgcolor='#333333',  # Dark background color
-                           margin=dict(l=20, r=20, t=40, b=20))  # Set margins
-    
-    return fig_freq
+def plot_category_frequency_by_topic(cat):
+    # Filter data based on the specified NPS category
+    filtered_df = score_df[score_df['nps_category'] == cat]
+    filtered_df = filtered_df[filtered_df['Topic_Number'].astype(str).str.len() == 1]
 
-def review_tables(cat):
-    cat_df = score_df[score_df['nps_category'] == cat]
-    topic_frequency = cat_df['Topic_Name'].value_counts()
-    most_cat = topic_frequency.nlargest(3).index
-    cat_review_list = pd.DataFrame(columns=score_df.columns)
-    for topic in most_cat:
-        topic_df = cat_df[cat_df['Topic_Name'] == topic].copy()  # Explicitly create a copy
-        topic_df['Review_Length'] = topic_df['Review'].apply(len)  # Add a column for review length
-        longest_reviews = topic_df.nlargest(3, 'Review_Length')  # Select the largest 3 based on review length
-        cat_review_list = pd.concat([cat_review_list, longest_reviews])
-    cat_review_list_display = cat_review_list[['Review', 'Topic_Name']]
-    
-    fig_review = go.Figure(data=[go.Table(
-        columnorder=[1, 2],
-        columnwidth=[80, 40],
-        header=dict(values=list(cat_review_list_display),
-                    align='left',
-                    fill_color='#0c0121',  # Purple header text
-                    font=dict(color='#ba84fc', size=20, family='Arial'),  # Header text style
-                    height=40),  # Header height
-        cells=dict(values=[cat_review_list.Review, cat_review_list.Topic_Name],
-                   align='left',
-                   fill=dict(color='#444454'),  # Cell background color
-                   font=dict(color='#fafaf9', size=15, family='Arial'),  # Cell text style
-                   height=30))  # Cell height
-    ])
-    
-    fig_review.update_layout(title=f"Top 9 Reviews for {cat}",
-                             paper_bgcolor='#333333',  # Dark background color
-                             plot_bgcolor='#333333',  # Dark background color
-                             margin=dict(l=20, r=20, t=40, b=20))  # Set margins
-    
-    return fig_review
+    # Group by Topic_Name and count the frequency of each topic
+    topic_freq = filtered_df.groupby('Topic_Name').size().reset_index(name='Frequency')
+
+    # Sort the DataFrame by the 'Frequency' column in descending order
+    topic_freq_sorted = topic_freq.sort_values(by='Frequency', ascending=False)
+
+    # Determine the range of frequencies
+    min_freq = topic_freq_sorted['Frequency'].min()
+    max_freq = topic_freq_sorted['Frequency'].max()
+
+    # Define the custom color scale
+    colorscale = [[0, 'red'], [1, 'green']]
+    if cat == "Detractor":
+        colorscale = [[0, 'green'], [1, 'red']]
+
+    # Plot the bar chart
+    fig = px.bar(topic_freq_sorted, x='Topic_Name', y='Frequency',
+                 title=f'Frequency of Reviews for Category: {cat}',
+                 labels={'Frequency': 'Number of Reviews'},
+                 color='Frequency', color_continuous_scale=colorscale,
+                 range_color=[min_freq, max_freq])
+
+    fig.update_layout(xaxis_title='Topic', yaxis_title='Frequency')
+
+    return fig
+
+
+def table_reviews_category(cat, selected_topic):
+    # Filter data based on the specified NPS category
+    filtered_df = score_df[score_df['nps_category'] == cat]
+
+    # Filter data based on selected topic
+    topic_filtered_df = filtered_df[filtered_df['Topic_Name'] == selected_topic]
+    # Extract review text
+    reviews = topic_filtered_df['Review'].tolist()
+
+    table = dash_table.DataTable(
+        id='table',
+        columns=[{'name': 'Review', 'id': 'Review'}],
+        data=[{'Review': review} for review in reviews],
+        style_table={'borderRadius': '15px'},  # Dark background color
+        style_header={'backgroundColor': '#6a05ed', 'fontWeight': 'bold', 'color': '#fafaf9'},  # Purple header text
+        style_cell={'backgroundColor': '#303030', 'textAlign': 'left', 'padding': '5px', 'color': '#fafaf9', 'whiteSpace': 'normal'}  
+        )
+    return table
 
 
 # Issues Page
@@ -325,13 +316,13 @@ data = pd.read_csv('combined_data.csv')
 solutions_df = pd.read_csv('Solutions.csv')
 
 # Test
-topics_issues = ['', 'App Responsiveness', 'Competition', 'Credit Card Usage', 'Customer Services', 'Customer Trust',
+topics_issues = ['', 'App Responsiveness', 'Competition', 'Credit card usage', 'Customer Services', 'Customer Trust',
           'Login & Account Setup', 'Money Growth (Interest Rates)', 'Safety', 'Service Products', 'User Interface']
 
 datasets = {
     'App Responsiveness': app_responsiveness,
     'Competition': competition,
-    'Credit Card Usage': credit_card,
+    'Credit card usage': credit_card,
     'Customer Services': customer_service,
     'Customer Trust': customer_trust,
     'Login & Account Setup': login_account,
@@ -493,28 +484,40 @@ def nps_cat(review):
 
 # DASH APP
 
+dbc_css = (
+    "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.4/dbc.min.css"
+)
 # Dash app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY], suppress_callback_exceptions=True)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY, dbc_css], suppress_callback_exceptions=True)
 
 # Sidebar
 sidebar = html.Div(
     [
-        html.H2("SentimentPro", className="display-4", style={"font-size": "2rem", "color":"#941cfa"}),
+        html.H2("SentimentPro", className="display-4", style={"font-size": "2rem", "color": "#a142ff"}),  # Text color changed to white
         html.Hr(),
         dbc.Nav(
             [
                 dbc.NavLink("Dashboard", href="/", active="exact"),
-                dbc.NavLink("Issues", href="/issues", active="exact"),
-                dbc.NavLink("NPS Rater", href="/nps_rater", active="exact"),
-                dbc.NavLink("Information", href="/information", active="exact"),
+                dbc.NavLink("Issues", href="/issues", active="exact", style={"color": "#FFFFFF"}),  # Background color changed to #40268a when active
+                dbc.NavLink("NPS Rater", href="/nps_rater", active="exact", style={"color": "#FFFFFF"}),  # Background color changed to #40268a when active
+                dbc.NavLink("Credits", href="/credits", active="exact", style={"color": "#FFFFFF"}),  # Background color changed to #40268a when active
             ],
             vertical=True,
             pills=True,
         ),
     ],
     id="sidebar",
-    className="bg-light",
-    style={"position": "fixed", "top": 0, "left": 0, "bottom": 0, "width": "16rem", "padding": "2rem", "transition": "0.5s"},
+    className="bg-dark",  # Color of the entire sidebar changed to #40268a
+    style={
+        "position": "fixed",
+        "top": 0,
+        "left": 0,
+        "bottom": 0,
+        "width": "16rem",
+        "padding": "2rem",
+        "transition": "0.5s",
+        "color": "#FFFFFF"  # Text color of the entire sidebar changed to white
+    },
 )
 
 # Main content
@@ -528,81 +531,154 @@ content = html.Div(
 # NPS Scores page layout
 nps_scores_layout = html.Div(
     [
-        html.H1("Net Promoter Score (NPS) Analysis", style = {"color":"#ba84fc"}),
-        html.P("Click on a bar in the graph below to see NPS scores by issues for that topic."),
-        dcc.DatePickerRange(
-            id='date-range-picker',
-            start_date='2022-08-01',
-            end_date=dt.now().date(),
-            display_format='YYYY-MM-DD'
+        html.H1("Net Promoter Score (NPS) Analysis", style = {"color":"#a142ff"}),
+        html.H3("Click on a bar in the graph below to see NPS score breakdown for that topic."),
+        dbc.Container(
+            dcc.DatePickerRange(
+                id='date-range-picker',
+                start_date='2022-08-01',
+                end_date=dt.now().date(),
+                display_format='YYYY-MM-DD',
+            ),
+            fluid=True,
+            className="dbc"
         ),
         dcc.Graph(id='nps-by-topic-graph'),
+        html.Br(),
         html.Div(id='drill-down-container'),
-        dcc.Graph(id='drill-down-graph')
+        dcc.Graph(id='drill-down-graph'),
+        html.Br(),
+        html.Br(),
     ]
 )
+
+
+# Create layout for Promoter tab
+promoter_layout = html.Div(
+    [
+        html.H3("Promoter Data", style={"color": "#a142ff"}),
+        html.H3("Select a topic from the dropdown to view Promoter Reviews for that topic"),
+        html.Br(),
+        dbc.Container(
+            dcc.Dropdown(
+                id="promoter-topic-dropdown",
+                options=[{"label": topic, "value": topic} for topic in topics_issues],
+                value=topics_issues[0],
+            ),
+            fluid=True,
+            className="dbc"
+        ),
+        html.Br(),
+        dbc.Container(
+            html.Div(id="promoter-review-table"),
+            fluid=True,
+            className="dbc"
+        ),
+        html.Br(),
+        html.Br(),
+        html.Br()
+    ]
+)
+
+# Create layout for Detractor tab
+detractor_layout = html.Div(
+    [
+        html.H3("Detractor Data", style={"color": "#a142ff"}),
+        html.H3("Select a topic from the dropdown to view Detractor Reviews for that topic"),
+        html.Br(),
+        dbc.Container(
+            dcc.Dropdown(
+                id="detractor-topic-dropdown",
+                options=[{"label": topic, "value": topic} for topic in topics_issues],
+                value=topics_issues[0],
+            ),
+            fluid=True,
+            className="dbc"
+        ),
+        html.Br(),
+        dbc.Container(
+            html.Div(id="detractor-review-table"),
+            fluid=True,
+            className="dbc"
+        ),
+        html.Br(),
+        html.Br(),
+        html.Br()
+    ]
+)
+
+# Create layout for Passive tab
+passive_layout = html.Div(
+    [
+        html.H3("Passive Data", style={"color": "#a142ff"}),
+        html.H3("Select a topic from the dropdown to view Passive Reviews for that topic"),
+        html.Br(),
+        dbc.Container(
+            dcc.Dropdown(
+                id="passive-topic-dropdown",
+                options=[{"label": topic, "value": topic} for topic in topics_issues],
+                value=topics_issues[0],
+            ),
+            fluid=True,
+            className="dbc"
+        ),
+        html.Br(),
+        dbc.Container(
+            html.Div(id="passive-review-table"),
+            fluid=True,
+            className="dbc"
+        ),
+        html.Br(),
+        html.Br(),
+        html.Br()
+    ]
+)
+
+
 
 # Dashboard page layout with tabs
 dashboard_layout = html.Div(
     [
-        html.H1("Dashboard",style = {"color":"#ba84fc"}),
+        html.H1("Dashboard", style={"color": "#a142ff"}),
         dbc.Tabs(
-            [
+            [                
                 dbc.Tab(
                     nps_scores_layout,  # NPS Scores section
                     label="NPS Scores",  # Rename the tab label
                 ),
                 dbc.Tab(
                     [
-                        html.H3("Promoters"),
-                        dbc.Row(
-                            [
-                                dcc.Graph(
-                                    id="Promoter Frequency",
-                                    figure=category_tables("Promoter"),
-                                ),
-                                dcc.Graph(
-                                    id="Promoter Review",
-                                    figure=review_tables("Promoter"),
-                                ),
-                            ]
+                        html.H3("Promoters", style={"color": "#a142ff"}),
+                        dcc.Graph(
+                            id="Promoter Frequency",
+                            figure=plot_category_frequency_by_topic("Promoter"),
                         ),
+                        html.Br(),
+                        promoter_layout,
                     ],
                     label="Promoter",
                 ),
                 dbc.Tab(
                     [
-                        html.H3("Detractors"),
-                        dbc.Row(
-                            [
-                                dcc.Graph(
-                                    id="Detractor Frequency",
-                                    figure=category_tables("Detractor"),
-                                ),
-                                dcc.Graph(
-                                    id="Detractor Review",
-                                    figure=review_tables("Detractor"),
-                                ),
-                            ]
+                        html.H3("Detractors", style={"color": "#a142ff"}),
+                        dcc.Graph(
+                            id="Detractor Frequency",
+                            figure=plot_category_frequency_by_topic("Detractor"),
                         ),
+                        html.Br(),
+                        detractor_layout,
                     ],
                     label="Detractor",
                 ),
                 dbc.Tab(
                     [
-                        html.H3("Passive"),
-                        dbc.Row(
-                            [
-                                dcc.Graph(
-                                    id="Passive Frequency",
-                                    figure=category_tables("Passive"),
-                                ),
-                                dcc.Graph(
-                                    id="Passive Review",
-                                    figure=review_tables("Passive"),
-                                ),
-                            ]
+                        html.H3("Passive", style={"color": "#a142ff"}),
+                        dcc.Graph(
+                            id="Passive Frequency",
+                            figure=plot_category_frequency_by_topic("Passive"),
                         ),
+                        html.Br(),
+                        passive_layout,
                     ],
                     label="Passive",
                 ),
@@ -618,46 +694,61 @@ topic_df_issues = pd.read_csv('topics_review.csv')
 # Issues page layout
 issues_layout = html.Div(
     [
-        html.H1("Issues Faced",style = {"color":"#ba84fc"}),
-        html.H3("Select an issue to view details"),
+        html.H1("Issue trend",style = {"color":"#a142ff"}),
+        html.H3("Select a topic from the dropdown to view details"),
         html.Br(),
-        dcc.DatePickerRange(
-            id='date_picker_range',
-            min_date_allowed=get_date_range()[0],
-            max_date_allowed=get_date_range()[1],
-            initial_visible_month=get_date_range()[0],
-            end_date=get_date_range()[1]),
-        html.Br(),
-        dcc.Dropdown(
-            id="topic-dropdown",
-            options=[{"label": topic, "value": topic} for topic in topics_issues],
-            value=topics_issues[0],
-            style={'fontColor': '#ebebeb'}  # Apply dark theme style
+        dbc.Container(
+            dcc.DatePickerRange(
+                id='date_picker_range',
+                min_date_allowed=get_date_range()[0],
+                max_date_allowed=get_date_range()[1],
+                initial_visible_month=get_date_range()[0],
+                end_date=get_date_range()[1],
+                ),
+            fluid=True,
+            className="dbc"
+        ),
+        dbc.Container(
+            dcc.Dropdown(
+                id="topic-dropdown",
+                options=[{"label": topic, "value": topic} for topic in topics_issues],
+                value=topics_issues[0],
+            ),
+            fluid=True,
+            className="dbc"
         ),
         dcc.Graph(id="issues-line-chart"),
-        html.Div(id='issues-table-container')  # Container for the table
+        html.Br(),
+        html.Div(id='issues-table-container'),  # Container for the table
+        html.Br(),
+        html.Br(),
+        html.Br()
     ]
 )
 
 # NPS Rater page layout
 nps_rater_layout = html.Div(
     [
-        html.H1("NPS Rater",style = {"color":"#ba84fc"}),
+        html.H1("NPS Rater", style = {"color":"#9155fa"}),
         html.H3("Input new reviews here"),
         dcc.Textarea(id="text-input", placeholder="Enter text here...", rows=5, style={"width": "100%"}),
         html.Br(),
         html.Button("Enter", id="submit-button"),
         html.Br(),
-        html.Div(id="output-text"),
+        dcc.Loading(
+            id="loading-1",
+            type="default",
+            children=html.Div(id="output-text")
+        )
     ]
 )
 
 # Information page layout
 information_layout = html.Div(
     [
-        html.H2("Credits",style = {"color":"#ba84fc"}),
+        html.H2("Credits",style = {"color":"#9155fa"}),
         html.Div([
-            html.H3("Development Team"),
+            html.H3("Development Team"), 
             html.Ul([
                 html.Li("Front End: Aiko Liana Amran | Denise Teh Kai Xin | Low Jia Li Natalie | Ng Yee Gee Kiley"),
                 html.Li("Back End: Anthea Ang Qiao En | Chan Wan Xin , Lydia | Lucia Pan Yucheng | Neleh Tok Ying Yun")
@@ -693,16 +784,18 @@ def render_page_content(pathname):
         return issues_layout
     elif pathname == "/nps_rater":
         return nps_rater_layout
-    elif pathname == "/information":
+    elif pathname == "/credits":
         return information_layout
     else:
         return dashboard_layout
+
+
 
 # Define callback to update main graph
 @app.callback(
     Output('nps-by-topic-graph', 'figure'),
     Input('date-range-picker', 'start_date'),
-     Input('date-range-picker', 'end_date')
+    Input('date-range-picker', 'end_date')
 )
 def update_main_graph(start_date, end_date):
     # get nps score for all topics
@@ -712,7 +805,7 @@ def update_main_graph(start_date, end_date):
         temp = topic_nps(data, start_date, end_date)
         topic_results.append(temp)
 
-    # store results in a datframe with topic names specified and sort
+    # store results in a dataframe with topic names specified and sort
     final_df = pd.DataFrame({'Topic': topics, 'NPS': topic_results})
     final_df_sorted = final_df.sort_values(by='NPS', ascending=False)
 
@@ -724,22 +817,23 @@ def update_main_graph(start_date, end_date):
     # making the graph itself
     c_scale = ['red', 'orange', 'green']
     fig = px.bar(final_df_sorted, x='Topic', y='NPS', title='NPS Score by Topic', color='NPS',
-                color_continuous_scale = c_scale, color_continuous_midpoint=0)
+                color_continuous_scale=c_scale, color_continuous_midpoint=0)
     fig.update_yaxes(range=[-topic_cap, topic_cap])
     return fig
 
 # Define callback to update drill-down graph
 @app.callback(
     Output('drill-down-graph', 'figure'),
+    Output('drill-down-graph', 'style'),  # Add an output for style to hide the graph
+    Output('drill-down-container', 'children'),  # Add an output for the container
     Input('nps-by-topic-graph', 'clickData'),
     Input('date-range-picker', 'start_date'),
     Input('date-range-picker', 'end_date')
 )
-
 def update_drill_down_graph(clickData, start_date, end_date):
     if clickData is None:
-        # If no data point is clicked, return an empty figure
-        return {}
+        # If no data point is clicked, return an empty figure and hide the graph
+        return {}, {'display': 'none'}, html.Div("Click on a bar in the graph above to see NPS scores by issues for that topic.")
     
     # Get the clicked topic
     topic = clickData['points'][0]['x']
@@ -763,7 +857,32 @@ def update_drill_down_graph(clickData, start_date, end_date):
                  color_continuous_scale=c_scale, color_continuous_midpoint=0)
     fig.update_yaxes(range=[-issue_cap, issue_cap])
     
-    return fig
+    return fig, {'display': 'block'}, html.Div()  # Return the graph and show it, and an empty Div for the container
+
+# Callback to update the review table based on dropdown selection
+@app.callback(
+    Output('promoter-review-table', 'children'),
+    [Input('promoter-topic-dropdown', 'value')]
+)
+def update_promoter_review_table(selected_topic):
+    return table_reviews_category("Promoter", selected_topic)
+
+# Callback to update the review table based on dropdown selection
+@app.callback(
+    Output('detractor-review-table', 'children'),
+    [Input('detractor-topic-dropdown', 'value')]
+)
+def update_detractor_review_table(selected_topic):
+    return table_reviews_category("Detractor", selected_topic)
+
+# Callback to update the review table based on dropdown selection
+@app.callback(
+    Output('passive-review-table', 'children'),
+    [Input('passive-topic-dropdown', 'value')]
+)
+def update_passive_review_table(selected_topic):
+    return table_reviews_category("Passive", selected_topic)
+
 
 
 def update_date_range(fig, start_date, end_date):
@@ -771,9 +890,8 @@ def update_date_range(fig, start_date, end_date):
         start_date = get_date_range()[0]
     if end_date is None:
         end_date = get_date_range()[1]
-    fig.update_xaxes(range=[start_date,end_date])
+    fig.update_xaxes(range=[start_date, end_date])
     return fig
-
 
 def serialize_figure(fig):
     # Convert Period objects to strings before serializing
@@ -791,7 +909,7 @@ def serialize_figure(fig):
      Output('issues-table-container', 'children')],  # Add output for the table
     [Input("topic-dropdown", "value"),
      Input('date_picker_range', 'start_date'),
-     Input('date_picker_range', 'end_date')]
+     Input('date_picker_range', 'end_date'),]
 )
 def update_issues_page(topic, start_date, end_date):
     if not topic:  # Check if topic is None or empty string
@@ -804,7 +922,7 @@ def update_issues_page(topic, start_date, end_date):
         topic_to_df = {
             'App Responsiveness': app_responsiveness,
             'Competition': competition,
-            'Credit Card Usage': credit_card,
+            'Credit card usage': credit_card,
             'Customer Services': customer_service,
             'Customer Trust': customer_trust,
             'Login & Account Setup': login_account,
@@ -819,32 +937,46 @@ def update_issues_page(topic, start_date, end_date):
         cleaned_df = preprocess(data_issues, df)
         # Call plot_top_n_issues_time_series function to generate the figure
         # Get the DataFrame of related issues and solutions for the selected topic
-        related_issues_df = select_related_solutions(topic,solutions_df)
+        related_issues_df = select_related_solutions(topic, solutions_df)
         
         # Generate the graph
         fig = plot_top_n_issues_time_series(cleaned_df)
         update_date_range(fig, start_date, end_date)
         
         # Generate the table
-        table = dash_table.DataTable(
-            id='issues-table',
-            columns=[{"name": i, "id": i} for i in related_issues_df.columns],
-            data=related_issues_df.to_dict('records'),
-            style_table={'borderRadius': '15px', 'backgroundColor': '#333333'},  # Dark background color
-            style_header={'backgroundColor': '#0c0121', 'fontWeight': 'bold', 'color': '#ba84fc'},  # Purple header text
-            style_cell={'backgroundColor': '#444454','textAlign': 'left', 'padding': '5px', 'color': '#fafaf9'},  # Light text color
+
+        table = dbc.Container([
+                    html.P("To filter: Key in the words you want and press Enter."),
+                    html.P("To remove filter: Clear text and press Enter"),
+                    dash_table.DataTable(
+                    id='issues-table',
+                    columns=[{"name": i, "id": i} for i in related_issues_df.columns],
+                    data=related_issues_df.to_dict('records'),
+                    style_table={'borderRadius': '15px'},  # Dark background color
+                    style_header={'backgroundColor': '#6a05ed', 'fontWeight': 'bold', 'color': '#fafaf9'},  # Purple header text
+                    style_cell={'backgroundColor': '#303030', 'textAlign': 'left', 'padding': '5px', 'color': '#fafaf9'},  # Light text color
+                    filter_action='native',  # Enable filtering
+                    filter_options={"placeholder_text": "Enter Filter Word Here..."},
+                    sort_action='native',  # Enable native sorting
+                    sort_by=[{'column_id': 'Issue', 'direction': 'asc'}]  # Default sorting by 'Name' column in ascending order
+                    )],
+                fluid=True,
+                className="dbc"
         )
+
         
         return serialize_figure(fig), table  # Return both the graph and the table
 
 
 @app.callback(
-    [Output("output-text", "children")],
+    Output("output-text", "children"),
     [Input("submit-button", "n_clicks")],
     [State("text-input", "value")]
 )
 def update_output(n_clicks, sentence):
     if n_clicks is not None and sentence is not None:
+        # Simulate processing delay
+        time.sleep(1)
         # Code for NPS rater output
         nps_score_output = nps_score(sentence)
         nps_category_output = nps_cat(sentence)
@@ -854,21 +986,20 @@ def update_output(n_clicks, sentence):
         paragraphs = nps_review_output.split('\n\n')
         
         # Create a list of HTML div elements for each paragraph
-        review_divs = [html.Div(paragraph, style={'margin-top': '20px','fontSize': '14px',}) for paragraph in paragraphs]
+        review_divs = [html.Div(paragraph, style={'margin-top': '20px', 'fontSize': '14px'}) for paragraph in paragraphs]
         
         # Combine the review divs with NPS score and category
         nps_output_content = [
-            html.Div("Summary of review:", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-bottom': '10px'}),
+            html.Div("Summary of review:", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-bottom': '10px'}),
             *review_divs,
-            html.Div(f"NPS Score: {nps_score_output}/10", style={'fontSize': '16px','fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-top': '20px'}),
-            html.Div(f"Category: {nps_category_output}", style={'fontSize': '16px','fontFamily': 'Courier New, serif','font-weight': 'bold', 'margin-top': '10px'})
+            html.Div(f"NPS Score: {nps_score_output}/10", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-top': '20px'}),
+            html.Div(f"Category: {nps_category_output}", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-top': '10px'})
         ]
         
-        return [nps_output_content]
-    else:
-        return ['']
+        return nps_output_content
 
-
+    # If not processing, return empty content
+    return ""
 
 if __name__ == "__main__":
     app.run_server(debug=True)
