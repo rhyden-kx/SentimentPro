@@ -28,10 +28,10 @@ load_figure_template("darkly")
 # Read Data
 
 ## Dashboard Page:
-topics_df = pd.read_csv('/data/TopicsofReviews.csv')
-nps_df = pd.read_csv('/data/nps_df.csv')
-score_df = pd.read_csv('/data/score_df.csv')
-date_df = pd.read_csv('/data/combined_data.csv')
+topics_df = pd.read_csv('/app/data/TopicsofReviews.csv')
+nps_df = pd.read_csv('/app/data/nps_df.csv')
+score_df = pd.read_csv('/app/data/score_df.csv')
+date_df = pd.read_csv('/app/data/combined_data.csv')
 
 import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -41,7 +41,7 @@ analyzer = SentimentIntensityAnalyzer()
 def process_csv(csv_file):
     # Read the CSV file
     # Specify the path to the CSV file
-    csv_path = os.path.join('/data/', csv_file)
+    csv_path = os.path.join('/app/data/', csv_file)
     
     # Read the CSV file
     topic_df = pd.read_csv(csv_path)
@@ -309,18 +309,18 @@ def get_date_range():
     max_date = all_data.date_clean.max()
     return [min_date, max_date]
 
-app_responsiveness = pd.read_csv('/data/App Responsiveness.csv')
-competition = pd.read_csv('/data/Competition.csv')
-credit_card = pd.read_csv('/data/Credit card.csv')
-customer_service = pd.read_csv('/data/Customer Services.csv')
-customer_trust = pd.read_csv('/data/Customer trust.csv')
-login_account = pd.read_csv('/data/Login & Account Setup.csv')
-money_growth = pd.read_csv('/data/Money Growth (Interest Rates).csv')
-safety = pd.read_csv('/data/Safety.csv')
-service_products = pd.read_csv('/data/Services & Products.csv')
-user_interface = pd.read_csv('/data/User Interface.csv')
-data = pd.read_csv('/data/combined_data.csv')
-solutions_df = pd.read_csv('/data/Solutions.csv')
+app_responsiveness = pd.read_csv('/app/data/App Responsiveness.csv')
+competition = pd.read_csv('/app/data/Competition.csv')
+credit_card = pd.read_csv('/app/data/Credit card.csv')
+customer_service = pd.read_csv('/app/data/Customer Services.csv')
+customer_trust = pd.read_csv('/app/data/Customer trust.csv')
+login_account = pd.read_csv('/app/data/Login & Account Setup.csv')
+money_growth = pd.read_csv('/app/data/Money Growth (Interest Rates).csv')
+safety = pd.read_csv('/app/data/Safety.csv')
+service_products = pd.read_csv('/app/data/Services & Products.csv')
+user_interface = pd.read_csv('/app/data/User Interface.csv')
+data = pd.read_csv('/app/data/combined_data.csv')
+solutions_df = pd.read_csv('/app/data/Solutions.csv')
 
 # Test
 topics_issues = ['', 'App Responsiveness', 'Competition', 'Credit card usage', 'Customer Services', 'Customer Trust',
@@ -749,8 +749,8 @@ nps_layout = html.Div(
     ]
 )
 
-data_issues = pd.read_csv('/data/combined_data.csv')
-topic_df_issues = pd.read_csv('/data/topics_review.csv')
+data_issues = pd.read_csv('/app/data/combined_data.csv')
+topic_df_issues = pd.read_csv('/app/data/topics_review.csv')
 
 
 # trends page layout
