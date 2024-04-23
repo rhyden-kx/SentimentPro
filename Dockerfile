@@ -7,9 +7,8 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Create a /data directory and copy CSV files into it
-RUN mkdir /app/data
-COPY data/*.csv /app/data/
+# Create the /app/data directory if it doesn't already exist
+RUN mkdir -p /app/data
 
 # Install any needed dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
