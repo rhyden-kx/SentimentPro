@@ -6,4 +6,4 @@ numpy
 pandas
 plotly
 vaderSentiment
-h2ogpte
+h2ogpte==1.4.10
