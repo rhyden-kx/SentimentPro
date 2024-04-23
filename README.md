@@ -41,7 +41,7 @@ To create an innovative system that harnesses advanced natural language processi
 
 1. Run the application in terminal:
     ```shell script
-     python app.py # to be changed when app is finalised
+     Dashboard v0.3.py # to be changed when app is finalised
     ```
 2. Open your web browser and navigate to http://localhost:8050 to access the app.
 
