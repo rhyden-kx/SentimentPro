@@ -823,7 +823,8 @@ review_rater_layout = html.Div(
             html.Div(id='output-data-upload'),
         ]),
         # New button for CSV file rating
-        html.Button('Rate my CSV File', id='rate-csv-button', n_clicks=0),
+        html.Button('Rate my CSV File', id='rate-csv-button', style={"font-size": "18px", "background-color": "#2b2b2b",  # Dark background color
+                "color": "#ffffff"}),
         html.Br(),
         html.Br(),
         dcc.Textarea(
