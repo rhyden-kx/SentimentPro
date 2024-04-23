@@ -2,6 +2,10 @@ version: '3'
 
 services:
   dash-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8050:8050"
+    volumes:
+      - .:/app
