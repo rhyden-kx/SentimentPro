@@ -24,7 +24,7 @@ load_figure_template("darkly")
 
 
 # Set Directory (For Local version only)
-os.chdir("/data")
+os.chdir("/app/data")
 
 # Read Data
 
