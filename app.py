@@ -798,10 +798,57 @@ trends_layout = html.Div(
     ]
 )
 
-# Review Rater page layout
+
+# Layout for CSV review rater output
+csv_review_rater_output = html.Div(
+    [
+        html.H3("CSV Review Rater Output", style={"color": "#9155fa"}),
+        dcc.Loading(
+            id="loading-csv-review-output",
+            type="default",
+            children=html.Div(id="csv-review-output")
+        ),
+        html.Br(),
+    ]
+)
+
+# Layout for textbox review rater
+textbox_review_rater_layout = html.Div(
+    [
+        html.H3("Textbox Review Rater", style={"color": "#9155fa"}),
+        dcc.Textarea(
+            id="text-input",
+            placeholder="Enter text here...",
+            rows=5,
+            style={
+                "width": "100%",
+                "background-color": "#2b2b2b",  # Dark background color
+                "color": "#ffffff"  # Text color (white)
+            }
+        ),
+        html.Br(),
+        html.Button(
+            "Enter",
+            id="submit-button",
+            style={
+                "font-size": "18px",
+                "background-color": "#2b2b2b",  # Dark background color
+                "color": "#ffffff"
+            }
+        ),
+        dcc.Loading(
+            id="loading-textbox-review-output",
+            type="default",
+            children=html.Div(id="textbox-review-output")
+        ),
+        html.Br(),
+    ]
+)
+
+# Combine both layouts into one
 review_rater_layout = html.Div(
     [
-        html.H1("Review Rater", style = {"color":"#9155fa"}),
+        html.H1("Review Rater", style={"color": "#9155fa"}),
         html.Div(
             dbc.Alert(
                 [
@@ -815,40 +862,24 @@ review_rater_layout = html.Div(
         html.Div([
             dcc.Upload(
                 id='upload-data',
-                children=html.Button('Click Here to Upload File', style={"font-size": "18px", "background-color": "#2b2b2b",  # Dark background color
-                "color": "#ffffff"}),
+                children=html.Button(
+                    'Click Here to Upload File',
+                    style={
+                        "font-size": "18px",
+                        "background-color": "#2b2b2b",  # Dark background color
+                        "color": "#ffffff"
+                    }
+                ),
                 # Allow multiple files to be uploaded
                 multiple=True
             ),
             html.Div(id='output-data-upload'),
         ]),
-        # New button for CSV file rating
-        html.Button('Rate my CSV File', id='rate-csv-button', style={"font-size": "18px", "background-color": "#2b2b2b",  # Dark background color
-                "color": "#ffffff"}),
-        html.Br(),
-        html.Br(),
-        dcc.Textarea(
-            id="text-input",
-            placeholder="Enter text here...",
-            rows=5,
-            style={
-                "width": "100%",
-                "background-color": "#2b2b2b",  # Dark background color
-                "color": "#ffffff"  # Text color (white)
-            }
-        ),
-        html.Br(),
-        html.Button("Enter", id="submit-button",style={"font-size": "18px", "background-color": "#2b2b2b",  # Dark background color
-                "color": "#ffffff"}),
-        html.Br(),
-        dcc.Loading(
-            id="loading-1",
-            type="default",
-            children=html.Div(id="output-text")
-        ),
-        html.Br(),
+        csv_review_rater_output,
+        textbox_review_rater_layout,
     ]
 )
+
 
 # credits page layout
 credits_layout = html.Div(
@@ -1109,7 +1140,7 @@ def parse_contents(contents, filename, date):
 
 # Callback to handle CSV file rating
 @app.callback(
-    Output('output-text', 'children'),
+    Output('csv-review-output', 'children'),
     Input('rate-csv-button', 'n_clicks'),
     State('output-data-upload', 'children')
 )
@@ -1151,7 +1182,6 @@ def rate_reviews_from_csv(n_clicks, uploaded_contents):
             ]
             
             return nps_output_content
-
 
 
 
