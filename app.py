@@ -1084,7 +1084,6 @@ def update_issues_page(topic, start_date, end_date):
         return serialize_figure(fig), table  # Return both the graph and the table
 
 
-# Function to parse uploaded CSV file
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
@@ -1092,8 +1091,7 @@ def parse_contents(contents, filename, date):
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         elif 'xls' in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
@@ -1107,49 +1105,66 @@ def parse_contents(contents, filename, date):
     text_content = ' '.join(df.applymap(str).values.flatten())
 
     # Return the text content along with the filename
-    return text_content
+    return (text_content, filename)
 
 # Callback to handle CSV file rating
 @app.callback(
-    Output('csv-output-text', 'children'),
-    [Input('rate-csv-button', 'n_clicks')],
-    [State('output-data-upload', 'children')]
+    Output('output-text', 'children'),
+    Input('rate-csv-button', 'n_clicks'),
+    State('output-data-upload', 'children')
 )
 def rate_reviews_from_csv(n_clicks, uploaded_contents):
-    if n_clicks > 0 and uploaded_contents is not None:
-        # Combine all uploaded text content into one long string
-        uploaded_text = parse_contents(uploaded_contents[0]['props']['children'], None, None)
+    if n_clicks and uploaded_contents:
+        # Iterate through each uploaded file
+        for content, filename in uploaded_contents:
+            # Perform NPS rating on the uploaded text
+            nps_score_output = nps_score(content)
+            nps_category_output = nps_cat(content)
+            nps_review_output = review_analysis(content)
+            
+            # Split the review analysis into paragraphs
+            paragraphs = nps_review_output.split('\n\n')
+            
+            # Create a list of HTML div elements for each paragraph
+            review_divs = [
+                html.Div(
+                    paragraph,
+                    style={'margin-top': '20px', 'fontSize': '14px'}
+                ) for paragraph in paragraphs
+            ]
+            
+            # Combine the review divs with NPS score and category
+            nps_output_content = [
+                html.Div(
+                    f"Net Promoter Score: {nps_score_output}/10",
+                    style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}
+                ),
+                html.Div(
+                    f"NPS Category: {nps_category_output}",
+                    style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}
+                ),
+                html.Div(
+                    "Summary of review:",
+                    style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}
+                ),
+                *review_divs,
+            ]
+            
+            return nps_output_content
 
-        # Perform NPS rating on the uploaded text
-        nps_score_output = nps_score(uploaded_text)
-        nps_category_output = nps_cat(uploaded_text)
-        nps_review_output = review_analysis(uploaded_text)
-        
-        # Split the review analysis into paragraphs
-        paragraphs = nps_review_output.split('\n\n')
-        
-        # Create a list of HTML div elements for each paragraph
-        review_divs = [html.Div(paragraph, style={'margin-top': '20px', 'fontSize': '14px'}) for paragraph in paragraphs]
-        
-        # Combine the review divs with NPS score and category
-        nps_output_content = [
-            html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
-            html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
-            html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
-            *review_divs,
-        ]
-        
-        return nps_output_content
 
-# Callback to handle text box rating
+
+
 @app.callback(
-    Output('text-output-text', 'children'),
-    [Input('rate-text-button', 'n_clicks')],
-    [State('text-input', 'value')]
+    Output("output-text", "children"),
+    [Input("submit-button", "n_clicks")],
+    [State("text-input", "value")]
 )
-def rate_reviews_from_text(n_clicks, sentence):
-    if n_clicks > 0 and sentence is not None:
-        # Perform NPS rating on the input sentence
+def update_output(n_clicks, sentence):
+    if n_clicks is not None and sentence is not None:
+        # Simulate processing delay
+        time.sleep(1)
+        # Code for NPS rater output
         nps_score_output = nps_score(sentence)
         nps_category_output = nps_cat(sentence)
         nps_review_output = review_analysis(sentence)
@@ -1162,13 +1177,16 @@ def rate_reviews_from_text(n_clicks, sentence):
         
         # Combine the review divs with NPS score and category
         nps_output_content = [
-            html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
-            html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
-            html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
+            html.Div("Summary of review:", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-bottom': '10px'}),
             *review_divs,
+            html.Div(f"NPS Score: {nps_score_output}/10", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-top': '20px'}),
+            html.Div(f"Category: {nps_category_output}", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-top': '10px'})
         ]
         
         return nps_output_content
+
+    # If not processing, return empty content
+    return ""
 
 if __name__ == "__main__":
     app.run_server(debug=True, host='0.0.0.0', port=8050)
