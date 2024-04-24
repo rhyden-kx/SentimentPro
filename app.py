@@ -1116,6 +1116,9 @@ def update_issues_page(topic, start_date, end_date):
         
         return serialize_figure(fig), table  # Return both the graph and the table
 
+
+
+# Define the parse_contents function to handle uploaded CSV files
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
@@ -1123,10 +1126,9 @@ def parse_contents(contents, filename, date):
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
+            # Assume that the user uploaded an Excel file
             df = pd.read_excel(io.BytesIO(decoded))
     except Exception as e:
         print(e)
@@ -1138,24 +1140,24 @@ def parse_contents(contents, filename, date):
     text_content = ' '.join(df.applymap(str).values.flatten())
 
     # Return the text content along with the filename
-    return html.Div([
-        html.H5(filename),
-        html.Hr(),  # horizontal line
-    ])
+    return text_content
 
 # Callback to handle updating output data upload for CSV files
-@app.callback(Output('csv-review-output-holder', 'children'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),
-              State('upload-data', 'last_modified'))
-def update_csv_output(list_of_contents, filename, date):
+@app.callback(
+    [Output('csv-review-output-holder', 'children'),
+     Output("parsed-csv-data", "data")],
+    [Input('upload-data', 'contents')],
+    [State('upload-data', 'filename'),
+     State('upload-data', 'last_modified')]
+)
+def update_csv_output(list_of_contents, list_of_names, list_of_dates):
     try:
         if list_of_contents is not None:
             # Perform processing of CSV content here
-            children = [
+            parsed_data = [
                 parse_contents(c, n, d) for c, n, d in
                 zip(list_of_contents, list_of_names, list_of_dates)]
-            return children
+            return parsed_data, parsed_data
         else:
             return None, ""
     except Exception as e:
@@ -1163,6 +1165,40 @@ def update_csv_output(list_of_contents, filename, date):
         print(e)
         return html.Div(["Error occurred while processing the CSV file."]), ""
 
+# Callback to handle updating output data for CSV input
+@app.callback(
+    Output("csv-review-output", "children"),
+    Output("csv-loading-bar", "children"),
+    [Input("csv-review-enter-button", "n_clicks")],
+    [State('parsed-csv-data', "data")]
+)
+def update_csv_output(n_clicks, parsed_data):
+    if n_clicks is not None and parsed_data:
+        # Simulate processing delay
+        time.sleep(1)
+        
+        # Code for NPS rater output using text input
+        nps_score_output = nps_score(parsed_data)
+        nps_category_output = nps_cat(parsed_data)
+        nps_review_output = review_analysis(parsed_data)
+        
+        # Split the review analysis into paragraphs
+        paragraphs = nps_review_output.split('\n\n')
+        
+        # Create a list of HTML div elements for each paragraph
+        review_divs = [html.Div(paragraph, style={'margin-top': '20px', 'fontSize': '14px'}) for paragraph in paragraphs]
+        
+        # Display NPS score and category with review analysis
+        nps_output_content = [
+            html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
+            html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
+            html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
+            *review_divs,
+        ]
+        return nps_output_content, ""
+    
+    # If not processing, return empty content
+    return "", ""
 
 
 # Callback to handle updating output data for CSV input
@@ -1181,13 +1217,19 @@ def update_textbox_output(n_clicks, sentence):
         nps_score_output = nps_score(sentence)
         nps_category_output = nps_cat(sentence)
         nps_review_output = review_analysis(sentence)
+
+        # Split the review analysis into paragraphs
+        paragraphs = nps_review_output.split('\n\n')
+        
+        # Create a list of HTML div elements for each paragraph
+        review_divs = [html.Div(paragraph, style={'margin-top': '20px', 'fontSize': '14px'}) for paragraph in paragraphs]
         
         # Display NPS score and category with review analysis
         nps_output_content = [
             html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
             html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
             html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
-            html.Div(nps_review_output, style={'margin-top': '20px', 'fontSize': '14px'})
+            *review_divs,
         ]
         
         return nps_output_content, ""
@@ -1195,39 +1237,6 @@ def update_textbox_output(n_clicks, sentence):
     # If not processing, return empty content
     return "", ""
 
-# Callback to handle updating output data for text input
-@app.callback(
-    Output("csv-review-output", "children"),
-    Output("csv-loading-bar", "children"),
-    Output("parsed-csv-data", "data"),  # Add a hidden Div to store parsed CSV data
-    [Input("csv-review-enter-button", "n_clicks")],
-    [State('csv-review-output-holder', "children")]
-)
-def update_csv_output(n_clicks, uploaded_contents):
-    if n_clicks is not None:
-        # Simulate processing delay
-        time.sleep(1)
-        
-        # Parse the uploaded CSV file and store the parsed data
-        parsed_data = parse_csv_contents(uploaded_contents)  # Call a function to parse CSV data
-        
-        # Code for NPS rater output using text input
-        nps_score_output = nps_score(parsed_data)
-        nps_category_output = nps_cat(parsed_data)
-        nps_review_output = review_analysis(parsed_data)
-        
-        # Display NPS score and category with review analysis
-        nps_output_content = [
-            html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
-            html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
-            html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
-            html.Div(nps_review_output, style={'margin-top': '20px', 'fontSize': '14px'})
-        ]
-        
-        return nps_output_content, ""
-    
-    # If not processing, return empty content
-    return "", ""
 
 if __name__ == "__main__":
     app.run_server(debug=True, host='0.0.0.0', port=8050)
