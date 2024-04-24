@@ -1144,6 +1144,7 @@ def parse_contents(contents, filename, date):
     return html.Div([
         html.H5(filename),
         html.Hr(),  # horizontal line
+        html.Div(text_content, id='parsed-csv-data', style={'display': 'none'})  # Add parsed data as a hidden div
     ])
 
 
