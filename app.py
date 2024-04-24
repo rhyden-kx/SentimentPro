@@ -1126,49 +1126,32 @@ def update_subtopics_page(topic, start_date, end_date):
 
 def parse_contents(contents, filename, date):
     try:
-        # Ensure contents is a string
-        if isinstance(contents, str):
-            # Check if padding is needed
-            missing_padding = len(contents) % 4
-            if missing_padding != 0:
-                # Add padding characters ('=')
-                contents += '=' * (4 - missing_padding)
-                
-            # Decode base64 content
-            decoded = base64.b64decode(contents)
+        # Check if padding is needed
+        missing_padding = len(contents) % 4
+        if missing_padding != 0:
+            # Add padding characters ('=')
+            contents += '=' * (4 - missing_padding)
+        
+        # Decode base64 content
+        decoded = base64.b64decode(contents)
 
-            if 'csv' in filename:
-                # Assume that the user uploaded a CSV file
-                df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-            elif 'xls' in filename:
-                # Assume that the user uploaded an Excel file
-                df = pd.read_excel(io.BytesIO(decoded))
-            else:
-                raise ValueError("Unsupported file format. Please upload a CSV or Excel file.")
+        # Read CSV file into DataFrame
+        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
 
-            try:
-                # Concatenate text content of all columns into one long string
-                text_content = ' '.join(df.applymap(str).values.flatten())
-            except Exception as e:
-                error_message = f"Error occurred while concatenating text content: {str(e)}"
-                print(error_message)
-                return html.Div([error_message])
+        # Extract text content from 'review' column
+        text_content = ' '.join(df['review'].astype(str))
 
-            # Return the text content along with the filename
-            return html.Div([
-                html.H5(filename),
-                html.Hr(),  # horizontal line
-                html.Div(text_content, id='parsed-csv-data', style={'display': 'none'})  # Add parsed data as a hidden div
-            ])
-
-        else:
-            raise ValueError("Invalid contents. Please provide a valid base64-encoded string.")
+        # Return the text content along with the filename
+        return html.Div([
+            html.H5(filename),
+            html.Hr(),  # horizontal line
+            html.Div(text_content, id='parsed-csv-data', style={'display': 'none'})  # Add parsed data as a hidden div
+        ])
 
     except Exception as e:
         error_message = f"Error occurred while processing the file '{filename}': {str(e)}"
         print(error_message)
         return html.Div([error_message])
-
 # Callback to handle updating output data upload for CSV files
 @app.callback(
     [Output('csv-review-output-holder', 'children'),
