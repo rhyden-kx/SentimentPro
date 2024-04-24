@@ -1118,34 +1118,35 @@ def update_issues_page(topic, start_date, end_date):
 
 
 
-# Define the parse_contents function to handle uploaded CSV files
 def parse_contents(contents, filename, date):
-    content_type, content_string = contents.split(',')
-
-    decoded = base64.b64decode(content_string)
     try:
+        content_type, content_string = contents.split(',')
+
+        decoded = base64.b64decode(content_string)
+        
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         elif 'xls' in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
-    except Exception as e:
-        print(e)
+        else:
+            raise ValueError("Unsupported file format. Please upload a CSV or Excel file.")
+
+        # Concatenate text content of all columns into one long string
+        text_content = ' '.join(df.applymap(str).values.flatten())
+
+        # Return the text content along with the filename
         return html.Div([
-            'There was an error processing this file.'
+            html.H5(filename),
+            html.Hr(),  # horizontal line
+            html.Div(text_content, id='parsed-csv-data', style={'display': 'none'})  # Add parsed data as a hidden div
         ])
-
-    # Concatenate text content of all columns into one long string
-    text_content = ' '.join(df.applymap(str).values.flatten())
-
-    # Return the text content along with the filename
-    return html.Div([
-        html.H5(filename),
-        html.Hr(),  # horizontal line
-        html.Div(text_content, id='parsed-csv-data', style={'display': 'none'})  # Add parsed data as a hidden div
-    ])
+    
+    except Exception as e:
+        error_message = f"Error occurred while processing the file '{filename}': {str(e)}"
+        print(error_message)
+        return html.Div([error_message])
 
 
 # Callback to handle updating output data upload for CSV files
