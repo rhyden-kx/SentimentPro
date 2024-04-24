@@ -803,7 +803,7 @@ trends_layout = html.Div(
 # Layout for CSV review rater output
 csv_review_rater_layout = html.Div(
     [
-        html.H3("CSV Review Rater Output", style={"color": "#9155fa"}),
+        html.H3("CSV Review Rater", style={"color": "#9155fa"}),
         dcc.Upload(
             id='upload-data',
             children=html.Button('Click Here to Upload File', style={"font-size": "18px", "background-color": "#2b2b2b",  # Dark background color
@@ -812,7 +812,7 @@ csv_review_rater_layout = html.Div(
         html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
         html.Div(id = "csv-review-output-holder"),
         html.Div(id='parsed-csv-data', style={'display': 'none'}),
-        html.Button("Analyze my CSV file", id="csv-review-enter-button",            
+        html.Button("Analyse my CSV file", id="csv-review-enter-button",            
                 style={
                 "font-size": "18px",
                 "background-color": "#2b2b2b",  # Dark background color
@@ -834,7 +834,7 @@ csv_review_rater_layout = html.Div(
 # Layout for textbox review rater
 textbox_review_rater_layout = html.Div(
     [
-        html.H3("Textbox Review Rater", style={"color": "#9155fa"}),
+        html.H3("Text Review Rater", style={"color": "#9155fa"}),
         dcc.Textarea(
             id="text-input",
             placeholder="Enter review(s) here...",
