@@ -1128,6 +1128,9 @@ def parse_contents(contents, filename, date):
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(
                 io.StringIO(decoded.decode('utf-8')))
+        elif 'xls' in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
     except Exception as e:
         print(e)
         return html.Div([
@@ -1159,7 +1162,7 @@ def update_csv_output(list_of_contents, list_of_names, list_of_dates):
             children = [
                 parse_contents(c, n, d) for c, n, d in
                 zip(list_of_contents, list_of_names, list_of_dates)]
-            return children
+            return children, ""
         else:
             return None, ""
     except Exception as e:
