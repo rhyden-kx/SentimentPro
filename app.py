@@ -800,22 +800,21 @@ trends_layout = html.Div(
 
 
 # Layout for CSV review rater output
-csv_review_rater_output = html.Div(
+csv_review_rater_layout = html.Div(
     [
         html.H3("CSV Review Rater Output", style={"color": "#9155fa"}),
         dcc.Upload(
-            id='upload-data',
-            children=html.Button('Click Here to Upload File'),
-            multiple=True
-        ),
-        html.Button("Enter", id="csv-review-enter-button"),
-        html.Div(id="csv-review-output"),
+                    id='upload-data',
+                    children=html.Button('Click Here to Upload File', style={"font-size": "18px", "background-color": "#2b2b2b",  # Dark background color
+                    "color": "#ffffff"}),
+                    ),
+        html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
+        html.Button("Analyse my CSV file", id="csv-review-enter-button"),
         dcc.Loading(
             id="loading-csv-review-output",
             type="default",
             children=html.Div(id="csv-review-output-holder")
         ),
-        html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
         html.Hr(),  # Break Line
     ]
 )
@@ -826,7 +825,7 @@ textbox_review_rater_layout = html.Div(
         html.H3("Textbox Review Rater", style={"color": "#9155fa"}),
         dcc.Textarea(
             id="text-input",
-            placeholder="Enter text here...",
+            placeholder="Enter review(s) here...",
             rows=5,
             style={
                 "width": "100%",
@@ -836,7 +835,7 @@ textbox_review_rater_layout = html.Div(
             },
         ),
         html.Button(
-            "Enter",
+            "Analyse my text",
             id="submit-button",
             style={
                 "font-size": "18px",
@@ -868,7 +867,7 @@ review_rater_layout = html.Div(
                 className="d-flex align-items-center",
             )
         ),
-        csv_review_rater_output,
+        csv_review_rater_layout,
         textbox_review_rater_layout
     ]
 )
@@ -1109,8 +1108,8 @@ def update_issues_page(topic, start_date, end_date):
         return serialize_figure(fig), table  # Return both the graph and the table
 
 
-# Define the parse_contents function to handle uploaded files
-def parse_contents(contents, filename, date):
+# Define the parse_contents function to handle uploaded CSV files
+def parse_csv_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)
@@ -1118,47 +1117,84 @@ def parse_contents(contents, filename, date):
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-        elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
+        else:
+            return html.Div([
+                'Invalid file format. Please upload a CSV file.'
+            ])
     except Exception as e:
         print(e)
         return html.Div([
             'There was an error processing this file.'
         ])
 
-    # Concatenate text content of all columns into one long string
-    text_content = ' '.join(df.applymap(str).values.flatten())
+    # Display filename and horizontal line
+    return html.Div([
+        html.H5(filename),
+        html.Hr(),  # horizontal line
+    ])
 
-    # Return the text content along with the filename
-    return (text_content, filename)
 
-# Callback to handle updating output data upload
-@app.callback(Output('file-name-holder', 'children'),
+# Callback to handle updating output data upload for CSV files
+@app.callback(Output('csv-review-output-holder', 'children'),
               Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'))
-def update_output(list_of_contents, list_of_names, list_of_dates):
+def update_csv_output(list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         children = [
-            parse_contents(c, n, d) for c, n, d in
+            parse_csv_contents(c, n, d) for c, n, d in
             zip(list_of_contents, list_of_names, list_of_dates)]
         return children
+
 
 # Callback to handle text input rating
 @app.callback(
     Output("textbox-review-output", "children"),
     [Input("submit-button", "n_clicks")],
     [State("text-input", "value"),
-     State('file-name-holder', 'children')]
+     State('textbox-review-output', 'children')]
 )
-def update_output(n_clicks, sentence, uploaded_filenames):
-    if n_clicks is not None and uploaded_filenames is not None:
-        # Combine all uploaded filenames into one string
-        uploaded_filenames_str = ', '.join([child['props']['children'] for child in uploaded_filenames if isinstance(child, html.Div)])
+def update_output(n_clicks, sentence, uploaded_contents):
+    if n_clicks is not None and uploaded_contents is not None:
+        # Combine all uploaded text content into one long string
+        uploaded_text = ' '.join([child['props']['children'][0]['props']['children'] for child in uploaded_contents])
 
-        # Concatenate the uploaded filenames and the input sentence
-        full_text = f"{uploaded_filenames_str} {sentence}" if uploaded_filenames_str else sentence
+        # Concatenate the uploaded text and the input sentence
+        full_text = f"{uploaded_text} {sentence}" if uploaded_text else sentence
+
+        # Simulate processing delay
+        time.sleep(1)
+        
+        # Code for NPS rater output
+        nps_score_output = nps_score(full_text)
+        nps_category_output = nps_cat(full_text)
+        nps_review_output = review_analysis(full_text)
+        
+        # Display NPS score, category, and review analysis
+        return html.Div([
+            html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
+            html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
+            html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
+            html.Div(nps_review_output, style={'margin-top': '20px', 'fontSize': '14px'}),
+        ])
+
+    # If not processing, return empty content
+    return ""
+
+
+@app.callback(
+    Output("textbox-review-output", "children"),
+    [Input("submit-button", "n_clicks")],
+    [State("text-input", "value"),
+     State('csv-review-output-holder', 'children')]
+)
+def update_output(n_clicks, sentence, uploaded_contents):
+    if n_clicks is not None and uploaded_contents is not None:
+        # Combine all uploaded text content into one long string
+        uploaded_text = ' '.join([child['props']['children'][0]['props']['children'] for child in uploaded_contents])
+
+        # Concatenate the uploaded text and the input sentence
+        full_text = f"{uploaded_text} {sentence}" if uploaded_text else sentence
 
         # Simulate processing delay
         time.sleep(1)
@@ -1176,10 +1212,10 @@ def update_output(n_clicks, sentence, uploaded_filenames):
         
         # Combine the review divs with NPS score and category
         nps_output_content = [
-            html.Div("Summary of review:", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-bottom': '10px'}),
+            html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
+            html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
+            html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
             *review_divs,
-            html.Div(f"NPS Score: {nps_score_output}/10", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-top': '20px'}),
-            html.Div(f"Category: {nps_category_output}", style={'fontSize': '16px', 'fontFamily': 'Courier New, serif', 'font-weight': 'bold', 'margin-top': '10px'})
         ]
         
         return nps_output_content
