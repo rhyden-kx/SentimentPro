@@ -158,11 +158,11 @@ def issue_nps(topic_df, start_date, end_date):
     # filter by date
     filtered_df = topic_df[(topic_df['Date'] >= start_date) & (topic_df['Date'] <= end_date)]
     
-    unique_keys = topic_df['key'].unique()
+    unique_keys = filtered_df['key'].unique()
     issues_nps_scores = {}
 
     for key in unique_keys:
-        key_df = topic_df[topic_df['key'] == key]
+        key_df = filtered_df[filtered_df['key'] == key]
         label_counts = key_df['nps_category'].value_counts()
 
         promoter_count = label_counts.get('Promoter', 0)
