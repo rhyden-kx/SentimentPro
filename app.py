@@ -803,14 +803,19 @@ trends_layout = html.Div(
 csv_review_rater_output = html.Div(
     [
         html.H3("CSV Review Rater Output", style={"color": "#9155fa"}),
-        html.Div(id="csv-review-output"),
-        html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
+        dcc.Upload(
+            id='upload-data',
+            children=html.Button('Click Here to Upload File'),
+            multiple=True
+        ),
         html.Button("Enter", id="csv-review-enter-button"),
+        html.Div(id="csv-review-output"),
         dcc.Loading(
             id="loading-csv-review-output",
             type="default",
             children=html.Div(id="csv-review-output-holder")
         ),
+        html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
         html.Hr(),  # Break Line
     ]
 )
@@ -863,37 +868,10 @@ review_rater_layout = html.Div(
                 className="d-flex align-items-center",
             )
         ),
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.Button(
-                            "Click Here to Upload File",
-                            id="upload-button",
-                            style={
-                                "font-size": "18px",
-                                "background-color": "#2b2b2b",  # Dark background color
-                                "color": "#ffffff",
-                            },
-                        ),
-                        html.Div(id="file-name-holder", style={"margin-bottom": "10px"}),
-                        html.Button("Enter", id="csv-enter-button"),
-                        html.Div(id="csv-output-holder"),
-                    ]
-                )
-            ]
-        ),
-        dcc.Loading(
-            id="loading-review-rater",
-            type="default",
-            children=[
-                csv_review_rater_output,
-                textbox_review_rater_layout
-            ]
-        )
+        csv_review_rater_output,
+        textbox_review_rater_layout
     ]
 )
-
 
 
 
