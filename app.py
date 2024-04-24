@@ -1126,9 +1126,10 @@ def parse_contents(contents, filename, date):
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
-            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
         elif 'xls' in filename:
-            # Assume that the user uploaded an Excel file
+            # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
     except Exception as e:
         print(e)
@@ -1140,7 +1141,11 @@ def parse_contents(contents, filename, date):
     text_content = ' '.join(df.applymap(str).values.flatten())
 
     # Return the text content along with the filename
-    return text_content
+    return html.Div([
+        html.H5(filename),
+        html.Hr(),  # horizontal line
+    ])
+
 
 # Callback to handle updating output data upload for CSV files
 @app.callback(
