@@ -1144,7 +1144,7 @@ def parse_contents(contents, filename, date):
             raise ValueError("No columns to parse from file.")
 
         # Extract text content from 'review' column (assuming 'review' column exists)
-        text_content = ' '.join(df['review'].astype(str))
+        text_content = ' '.join(df.applymap(str).values.flatten())
 
         # Return the text content along with the filename
         return html.Div([
