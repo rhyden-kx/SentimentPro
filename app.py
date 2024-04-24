@@ -1126,8 +1126,6 @@ def update_subtopics_page(topic, start_date, end_date):
 
 def parse_contents(contents, filename, date):
     try:
-        # Decode base64 content directly
-        decoded = base64.b64decode(contents)
 
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
