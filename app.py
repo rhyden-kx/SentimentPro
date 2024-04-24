@@ -811,7 +811,13 @@ csv_review_rater_layout = html.Div(
         html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
         html.Div(id = "csv-review-output-holder"),
         html.Div(id='parsed-csv-data', style={'display': 'none'}),
-        html.Button("Analyse my CSV file", id="csv-review-enter-button"),
+        html.Button("Analyze my CSV file", id="csv-review-enter-button",            
+                style={
+                "font-size": "18px",
+                "background-color": "#2b2b2b",  # Dark background color
+                "color": "#ffffff",
+                "margin-bottom": "10px",  # Add margin bottom
+            },),
         dcc.Loading(
             id="loading-csv-review-output",
             type="default",
