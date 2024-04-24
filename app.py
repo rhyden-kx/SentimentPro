@@ -4,6 +4,7 @@ import random
 import time
 import dash
 import base64
+import html
 import datetime
 import io
 import dash_bootstrap_components as dbc
@@ -1138,7 +1139,11 @@ def parse_contents(contents, filename, date):
         # Read CSV file into DataFrame
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
 
-        # Extract text content from 'review' column
+        # Check if DataFrame has any columns
+        if df.empty or len(df.columns) == 0:
+            raise ValueError("No columns to parse from file.")
+
+        # Extract text content from 'review' column (assuming 'review' column exists)
         text_content = ' '.join(df['review'].astype(str))
 
         # Return the text content along with the filename
@@ -1152,27 +1157,6 @@ def parse_contents(contents, filename, date):
         error_message = f"Error occurred while processing the file '{filename}': {str(e)}"
         print(error_message)
         return html.Div([error_message])
-# Callback to handle updating output data upload for CSV files
-@app.callback(
-    [Output('csv-review-output-holder', 'children'),
-     Output("parsed-csv-data", "data")],
-    [Input('upload-data', 'contents')],
-    [State('upload-data', 'filename'),
-     State('upload-data', 'last_modified')]
-)
-def update_csv_output(list_of_contents, filename, date):
-    try:
-        if list_of_contents is not None:
-            # Perform processing of CSV content here
-            children = [
-                parse_contents(c, filename, date) for c in list_of_contents]
-            return children, ""
-        else:
-            return None, ""
-    except Exception as e:
-        print("Error occurred while updating CSV output:")
-        print(e)
-        return html.Div(["Error occurred while processing the CSV file."]), ""
 
 
 # Callback to handle updating output data for CSV input
