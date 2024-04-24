@@ -1176,17 +1176,20 @@ def display_uploaded_filename(filename):
     Output("csv-review-output", "children"),
     Output("csv-loading-bar", "children"),
     [Input("csv-review-enter-button", "n_clicks")],
-    [State('parsed-csv-data', "children")]
+    [State('parsed-csv-data', "children")]  # State: children containing the parsed DataFrame
 )
 def update_csv_output(n_clicks, parsed_data):
     if n_clicks is not None and parsed_data:
         # Simulate processing delay
         time.sleep(1)
         
-        # Code for NPS rater output using text input
-        nps_score_output = nps_score(parsed_data)
-        nps_category_output = nps_cat(parsed_data)
-        nps_review_output = review_analysis(parsed_data)
+        # Convert the parsed data (DataFrame) back to a string
+        df = pd.read_json(parsed_data)
+        
+        # Code for NPS rater output using DataFrame input
+        nps_score_output = nps_score(df)
+        nps_category_output = nps_cat(df)
+        nps_review_output = review_analysis(df)
         
         # Split the review analysis into paragraphs
         paragraphs = nps_review_output.split('\n\n')
@@ -1205,7 +1208,6 @@ def update_csv_output(n_clicks, parsed_data):
     
     # If not processing, return empty content
     return "", ""
-
 
 # Callback to handle updating output data for CSV input
 @app.callback(
