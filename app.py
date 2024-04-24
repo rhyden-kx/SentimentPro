@@ -175,7 +175,7 @@ def issue_nps(topic_df, start_date, end_date):
         else:
             nps = ((promoter_count - detractor_count) / total_count) * 100
             issues_nps_scores[key] = round(nps, 2)
-        issuesNPS = pd.DataFrame(list(issues_nps_scores.items()), columns=['Issue', 'NPS'])
+        issuesNPS = pd.DataFrame(list(issues_nps_scores.items()), columns=['subtopic', 'NPS'])
 
     return issuesNPS
 
@@ -246,7 +246,7 @@ def table_reviews_category(cat, selected_topic):
     return table
 
 
-# Issues Page
+# subtopics Page
 def plot_default_graph():
     # Merge the dataframes
     all_data = data.merge(topic_df_issues, on='review', how='inner')
@@ -339,14 +339,14 @@ datasets = {
     'User Interface': user_interface
 }
 
-# Issue method
-def issue(data, df):
+# subtopic method
+def subtopic(data, df):
     # Merge the two DataFrames on the 'review' column
     merged = pd.merge(data, df, on='review', how='inner')
     # Drop the 'Unnamed: 0' column
     merged.drop(columns=['Unnamed: 0'], inplace=True)
-    # Rename the 'key' column to 'issue'
-    merged.rename(columns={'key': 'issue'}, inplace=True)
+    # Rename the 'key' column to 'subtopic'
+    merged.rename(columns={'key': 'subtopic'}, inplace=True)
     # Convert 'date' column to datetime format
     merged['date'] = pd.to_datetime(merged['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
     # If the previous conversion fails, try a different format
@@ -355,25 +355,25 @@ def issue(data, df):
     merged['date'] = merged['date'].astype(str)
     # Extract date only (YYYY-MM-DD)
     merged['date_only'] = merged['date'].str[:10]
-    grouped_data = merged.groupby(['date_only', 'issue']).size().reset_index(name='count')
+    grouped_data = merged.groupby(['date_only', 'subtopic']).size().reset_index(name='count')
     # Convert 'date_only' to datetime if it's not already in datetime format
     grouped_data['date_only'] = pd.to_datetime(grouped_data['date_only'])
-    # Aggregate data by month and issue
+    # Aggregate data by month and subtopic
     grouped_data['month_year'] = grouped_data['date_only'].dt.to_period('M')
-    monthly_data = grouped_data.groupby(['month_year', 'issue']).size().reset_index(name='count')
-    # Calculate total count for each issue
-    issue_totals = monthly_data.groupby('issue')['count'].sum().sort_values(ascending=False)
-    # Select top n issues
+    monthly_data = grouped_data.groupby(['month_year', 'subtopic']).size().reset_index(name='count')
+    # Calculate total count for each subtopic
+    issue_totals = monthly_data.groupby('subtopic')['count'].sum().sort_values(ascending=False)
+    # Select top n subtopics
     top_issues = issue_totals.head(5).index
     return top_issues 
 
-# Initialize an empty dictionary to store the top issues for each topic
-issues = {}
+# Initialize an empty dictionary to store the top subtopics for each topic
+subtopics = {}
 
 # Call preprocess for each key in the datasets dictionary
 for topic, df in datasets.items():
-    top_issues = issue(data, df)
-    issues[topic] = top_issues
+    top_issues = subtopic(data, df)
+    subtopics[topic] = top_issues
 
 
 def preprocess(data, df):
@@ -383,8 +383,8 @@ def preprocess(data, df):
     # Drop the 'Unnamed: 0' column
     merged.drop(columns=['Unnamed: 0'], inplace=True)
 
-    # Rename the 'key' column to 'issue'
-    merged.rename(columns={'key': 'issue'}, inplace=True)
+    # Rename the 'key' column to 'subtopic'
+    merged.rename(columns={'key': 'subtopic'}, inplace=True)
 
     # Convert 'date' column to datetime format
     merged['date'] = pd.to_datetime(merged['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
@@ -402,23 +402,23 @@ def preprocess(data, df):
 
 def plot_top_n_issues_time_series(merged_data):
     # Create a time series line plot
-    grouped_data = merged_data.groupby(['date_only', 'issue']).size().reset_index(name='count')
+    grouped_data = merged_data.groupby(['date_only', 'subtopic']).size().reset_index(name='count')
 
     # Convert 'date_only' to datetime if it's not already in datetime format
     grouped_data['date_only'] = pd.to_datetime(grouped_data['date_only'])
 
-    # Aggregate data by month and issue
+    # Aggregate data by month and subtopic
     grouped_data['month_year'] = grouped_data['date_only'].dt.to_period('M')
-    monthly_data = grouped_data.groupby(['month_year', 'issue']).size().reset_index(name='count')
+    monthly_data = grouped_data.groupby(['month_year', 'subtopic']).size().reset_index(name='count')
 
-    # Calculate total count for each issue
-    issue_totals = monthly_data.groupby('issue')['count'].sum().sort_values(ascending=False)
+    # Calculate total count for each subtopic
+    issue_totals = monthly_data.groupby('subtopic')['count'].sum().sort_values(ascending=False)
 
-    # Select top n issues
+    # Select top n subtopics
     top_issues = issue_totals.head(5).index
 
-    # Filter monthly_data for top n issues
-    monthly_data_top = monthly_data[monthly_data['issue'].isin(top_issues)]
+    # Filter monthly_data for top n subtopics
+    monthly_data_top = monthly_data[monthly_data['subtopic'].isin(top_issues)]
 
     # Convert 'month_year' to string format
     monthly_data_top.loc[:, 'month_year'] = monthly_data_top['month_year'].astype(str)
@@ -437,7 +437,7 @@ def plot_top_n_issues_time_series(merged_data):
     }
 
     # Create a time series line plot
-    fig = px.line(monthly_data_top, x='month_year', y='count', color='issue', title=f'Frequency of Top 5 Subtopics Over Time', color_discrete_map=issue_color_map)
+    fig = px.line(monthly_data_top, x='month_year', y='count', color='subtopic', title=f'Frequency of Top 5 Subtopics Over Time', color_discrete_map=issue_color_map)
     
     # Add markers to the lines
     for trace in fig.data:
@@ -789,9 +789,9 @@ trends_layout = html.Div(
             fluid=True,
             className="dbc"
         ),
-        dcc.Graph(id="issues-line-chart"),
+        dcc.Graph(id="subtopics-line-chart"),
         html.Br(),
-        html.Div(id='issues-table-container'),  # Container for the table
+        html.Div(id='subtopics-table-container'),  # Container for the table
         html.Br(),
         html.Br(),
         html.Br()
@@ -978,7 +978,7 @@ def update_drill_down_graph(clickData, start_date, end_date):
     # Get the clicked topic
     topic = clickData['points'][0]['x']
 
-    # get the df of issue nps scores only for the topic clicked
+    # get the df of subtopic nps scores only for the topic clicked
     file_path = f"{topic}.csv"
     data = process_csv(file_path)
     issue_results = issue_nps(data, start_date, end_date)
@@ -993,7 +993,7 @@ def update_drill_down_graph(clickData, start_date, end_date):
 
     # making the graph itself
     c_scale = ['red', 'orange', 'green']
-    fig = px.bar(issue_results_sorted, x='Issue', y='NPS', title=f'NPS for {topic} Subtopic', color='NPS',
+    fig = px.bar(issue_results_sorted, x='subtopic', y='NPS', title=f'NPS for {topic} Subtopic', color='NPS',
                  color_continuous_scale=c_scale, color_continuous_midpoint=0)
     fig.update_yaxes(range=[-issue_cap, issue_cap])
     
@@ -1045,8 +1045,8 @@ def serialize_figure(fig):
     return fig_dict
 
 @app.callback(
-    [Output("issues-line-chart", "figure"),
-     Output('issues-table-container', 'children')],  # Add output for the table
+    [Output("subtopics-line-chart", "figure"),
+     Output('subtopics-table-container', 'children')],  # Add output for the table
     [Input("topic-dropdown", "value"),
      Input('date_picker_range', 'start_date'),
      Input('date_picker_range', 'end_date'),]
@@ -1076,7 +1076,7 @@ def update_issues_page(topic, start_date, end_date):
         df = topic_to_df[topic]
         cleaned_df = preprocess(data_issues, df)
         # Call plot_top_n_issues_time_series function to generate the figure
-        # Get the DataFrame of related issues and solutions for the selected topic
+        # Get the DataFrame of related subtopics and solutions for the selected topic
         related_issues_df = select_related_solutions(topic, solutions_df)
         
         # Generate the graph
@@ -1084,7 +1084,7 @@ def update_issues_page(topic, start_date, end_date):
         update_date_range(fig, start_date, end_date)
         
         # Generate the table
-        related_issues_df = related_issues_df.rename(columns={'Issue': 'Subtopic', 'Solution': 'Insight'})
+        related_issues_df = related_issues_df.rename(columns={'subtopic': 'Subtopic', 'Solution': 'Insight'})
         table = dbc.Container([
                     html.Div(
                         dbc.Alert(
@@ -1098,7 +1098,7 @@ def update_issues_page(topic, start_date, end_date):
                     ),
                     html.Br(),
                     dash_table.DataTable(
-                    id='issues-table',
+                    id='subtopics-table',
                     columns=[{"name": i, "id": i} for i in related_issues_df.columns],
                     data=related_issues_df.to_dict('records'),
                     style_table={'borderRadius': '15px'},  # Dark background color
