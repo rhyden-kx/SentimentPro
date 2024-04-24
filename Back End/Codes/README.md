@@ -20,7 +20,11 @@ Run CombiningData.ipynb to obtain Data/combined_data.csv
 To remove all non-alphabetical characters such as emojis:
 Run Codes/datacleaning.ipynb to obtain Data/Reviews.csv
 
+## Topic Modelling
 
+## Sentiment Analysis
+
+## Obtaining Issues & Summaries 
 
 
 
