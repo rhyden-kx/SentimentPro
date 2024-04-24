@@ -804,8 +804,8 @@ csv_review_rater_layout = html.Div(
     [
         html.H3("CSV Review Rater Output", style={"color": "#9155fa"}),
         dcc.Upload(
-                    id='upload-data',
-                    children=html.Button('Click Here to Upload File', style={"font-size": "18px", "background-color": "#2b2b2b",  # Dark background color
+            id='upload-data',
+            children=html.Button('Click Here to Upload File', style={"font-size": "18px", "background-color": "#2b2b2b",  # Dark background color
                     "color": "#ffffff"}),
                     ),
         html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
@@ -813,7 +813,10 @@ csv_review_rater_layout = html.Div(
         dcc.Loading(
             id="loading-csv-review-output",
             type="default",
-            children=html.Div(id="csv-review-output-holder")
+            children=[
+                html.Div(id="csv-review-output-holder"),
+                html.Div("CSV Loading Bar", id="csv-loading-bar")
+            ]
         ),
         html.Hr(),  # Break Line
     ]
@@ -847,7 +850,10 @@ textbox_review_rater_layout = html.Div(
         dcc.Loading(
             id="loading-textbox-review-output",
             type="default",
-            children=html.Div(id="textbox-review-output")
+            children=[
+                html.Div(id="textbox-review-output"),
+                html.Div("Text Loading Bar", id="text-loading-bar")
+            ]
         ),
         html.Hr(),  # Break Line
     ]
@@ -871,6 +877,7 @@ review_rater_layout = html.Div(
         textbox_review_rater_layout
     ]
 )
+
 
 
 
@@ -1108,6 +1115,8 @@ def update_issues_page(topic, start_date, end_date):
         return serialize_figure(fig), table  # Return both the graph and the table
 
 
+logging.basicConfig(level=logging.DEBUG)  # Enable logging
+
 # Define the parse_contents function to handle uploaded CSV files
 def parse_csv_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
@@ -1133,36 +1142,31 @@ def parse_csv_contents(contents, filename, date):
         html.Hr(),  # horizontal line
     ])
 
-import logging
-
-logging.basicConfig(level=logging.DEBUG)  # Enable logging
-
 # Callback to handle updating output data upload for CSV files
 @app.callback(Output('csv-review-output-holder', 'children'),
+              Output('csv-loading-bar', 'children'),
               Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'))
-def update_csv_output(list_of_contents, list_of_names, list_of_dates):
+def update_csv_output(list_of_contents, filename, date):
     try:
         logging.debug(f"list_of_contents: {list_of_contents}")
-        logging.debug(f"list_of_names: {list_of_names}")
-        logging.debug(f"list_of_dates: {list_of_dates}")
+        logging.debug(f"filename: {filename}")
+        logging.debug(f"date: {date}")
 
         if list_of_contents is not None:
-            children = [
-                parse_csv_contents(c, n, d) for c, n, d in
-                zip(list_of_contents, list_of_names, list_of_dates)]
-            return children
+            # Perform processing of CSV content here
+            return parse_csv_contents(list_of_contents, filename, date), ""
         else:
             logging.debug("No contents received")
-            return None
+            return None, ""
     except Exception as e:
         logging.exception("Error occurred while updating CSV output:")
-        return html.Div(["Error occurred while processing the CSV file."])
-
+        return html.Div(["Error occurred while processing the CSV file."]), ""
 
 @app.callback(
     Output("textbox-review-output", "children"),
+    Output("text-loading-bar", "children"),
     [Input("submit-button", "n_clicks")],
     [State("text-input", "value"),
      State('csv-review-output-holder', 'children')]
@@ -1208,11 +1212,10 @@ def update_output(n_clicks, sentence, uploaded_contents):
                 html.Div(nps_review_output, style={'margin-top': '20px', 'fontSize': '14px'})
             ]
         
-        return nps_output_content
-
+        return nps_output_content, ""
+    
     # If not processing, return empty content
-    return ""
-
+    return "", ""
 
 if __name__ == "__main__":
     app.run_server(debug=True, host='0.0.0.0', port=8050)
