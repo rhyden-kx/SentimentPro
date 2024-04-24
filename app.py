@@ -154,12 +154,12 @@ def topic_nps(topic_df, start_date, end_date):
 #data.shape
 #topic_nps(data, data['Date'].min(), data['Date'].max())
 
-def issue_nps(topic_df, start_date, end_date):
+def subtopic_nps(topic_df, start_date, end_date):
     # filter by date
     filtered_df = topic_df[(topic_df['Date'] >= start_date) & (topic_df['Date'] <= end_date)]
     
     unique_keys = filtered_df['key'].unique()
-    issues_nps_scores = {}
+    subtopics_nps_scores = {}
 
     for key in unique_keys:
         key_df = filtered_df[filtered_df['key'] == key]
@@ -171,18 +171,18 @@ def issue_nps(topic_df, start_date, end_date):
         total_count = promoter_count + detractor_count + passive_count
 
         if total_count == 0:
-            issues_nps_scores[key] = None
+            subtopics_nps_scores[key] = None
         else:
             nps = ((promoter_count - detractor_count) / total_count) * 100
-            issues_nps_scores[key] = round(nps, 2)
-        issuesNPS = pd.DataFrame(list(issues_nps_scores.items()), columns=['subtopic', 'NPS'])
+            subtopics_nps_scores[key] = round(nps, 2)
+        subtopicsNPS = pd.DataFrame(list(subtopics_nps_scores.items()), columns=['subtopic', 'NPS'])
 
-    return issuesNPS
+    return subtopicsNPS
 
 
 # test out the functions
-#issue_df = issue_nps(data, data['Date'].min(), data['Date'].max())
-#issue_df
+#subtopic_df = subtopic_nps(data, data['Date'].min(), data['Date'].max())
+#subtopic_df
 
 # list out csv file names
 topics_csv = ['App Responsiveness.csv', 'Competition.csv', 'Credit card usage.csv', 'Customer Services.csv', 'Customer trust.csv', 
@@ -249,7 +249,7 @@ def table_reviews_category(cat, selected_topic):
 # subtopics Page
 def plot_default_graph():
     # Merge the dataframes
-    all_data = data.merge(topic_df_issues, on='review', how='inner')
+    all_data = data.merge(topic_df_subtopics, on='review', how='inner')
 
     # Clean the date
     all_data['date_clean'] = pd.to_datetime(all_data['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
@@ -298,7 +298,7 @@ def plot_default_graph():
 
 def get_date_range():
     # Merge the dataframes
-    all_data = data.merge(topic_df_issues, on='review', how='inner')
+    all_data = data.merge(topic_df_subtopics, on='review', how='inner')
 
     # Clean the date
     all_data['date_clean'] = pd.to_datetime(all_data['date'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
@@ -323,7 +323,7 @@ data = pd.read_csv('/app/data/combined_data.csv')
 solutions_df = pd.read_csv('/app/data/Solutions.csv')
 
 # Test
-topics_issues = ['', 'App Responsiveness', 'Competition', 'Credit card usage', 'Customer Services', 'Customer Trust',
+topics_subtopics = ['', 'App Responsiveness', 'Competition', 'Credit card usage', 'Customer Services', 'Customer Trust',
           'Login & Account Setup', 'Money Growth (Interest Rates)', 'Safety', 'Service Products', 'User Interface']
 
 datasets = {
@@ -362,18 +362,18 @@ def subtopic(data, df):
     grouped_data['month_year'] = grouped_data['date_only'].dt.to_period('M')
     monthly_data = grouped_data.groupby(['month_year', 'subtopic']).size().reset_index(name='count')
     # Calculate total count for each subtopic
-    issue_totals = monthly_data.groupby('subtopic')['count'].sum().sort_values(ascending=False)
+    subtopic_totals = monthly_data.groupby('subtopic')['count'].sum().sort_values(ascending=False)
     # Select top n subtopics
-    top_issues = issue_totals.head(5).index
-    return top_issues 
+    top_subtopics = subtopic_totals.head(5).index
+    return top_subtopics 
 
 # Initialize an empty dictionary to store the top subtopics for each topic
 subtopics = {}
 
 # Call preprocess for each key in the datasets dictionary
 for topic, df in datasets.items():
-    top_issues = subtopic(data, df)
-    subtopics[topic] = top_issues
+    top_subtopics = subtopic(data, df)
+    subtopics[topic] = top_subtopics
 
 
 def preprocess(data, df):
@@ -400,7 +400,7 @@ def preprocess(data, df):
 
     return merged
 
-def plot_top_n_issues_time_series(merged_data):
+def plot_top_n_subtopics_time_series(merged_data):
     # Create a time series line plot
     grouped_data = merged_data.groupby(['date_only', 'subtopic']).size().reset_index(name='count')
 
@@ -412,18 +412,18 @@ def plot_top_n_issues_time_series(merged_data):
     monthly_data = grouped_data.groupby(['month_year', 'subtopic']).size().reset_index(name='count')
 
     # Calculate total count for each subtopic
-    issue_totals = monthly_data.groupby('subtopic')['count'].sum().sort_values(ascending=False)
+    subtopic_totals = monthly_data.groupby('subtopic')['count'].sum().sort_values(ascending=False)
 
     # Select top n subtopics
-    top_issues = issue_totals.head(5).index
+    top_subtopics = subtopic_totals.head(5).index
 
     # Filter monthly_data for top n subtopics
-    monthly_data_top = monthly_data[monthly_data['subtopic'].isin(top_issues)]
+    monthly_data_top = monthly_data[monthly_data['subtopic'].isin(top_subtopics)]
 
     # Convert 'month_year' to string format
     monthly_data_top.loc[:, 'month_year'] = monthly_data_top['month_year'].astype(str)
 
-    issue_color_map = {
+    subtopic_color_map = {
         'App Responsiveness': 'blue',
         'Competition': 'orange',
         'Credit card usage': 'green',
@@ -437,7 +437,7 @@ def plot_top_n_issues_time_series(merged_data):
     }
 
     # Create a time series line plot
-    fig = px.line(monthly_data_top, x='month_year', y='count', color='subtopic', title=f'Frequency of Top 5 Subtopics Over Time', color_discrete_map=issue_color_map)
+    fig = px.line(monthly_data_top, x='month_year', y='count', color='subtopic', title=f'Frequency of Top 5 Subtopics Over Time', color_discrete_map=subtopic_color_map)
     
     # Add markers to the lines
     for trace in fig.data:
@@ -600,8 +600,8 @@ promoter_layout = html.Div(
         dbc.Container(
             dcc.Dropdown(
                 id="promoter-topic-dropdown",
-                options=[{"label": topic, "value": topic} for topic in topics_issues],
-                value=topics_issues[0],
+                options=[{"label": topic, "value": topic} for topic in topics_subtopics],
+                value=topics_subtopics[0],
                 style = {"width":"50%"},
                 placeholder = "Select Topic...",
             ),
@@ -637,8 +637,8 @@ detractor_layout = html.Div(
         dbc.Container(
             dcc.Dropdown(
                 id="detractor-topic-dropdown",
-                options=[{"label": topic, "value": topic} for topic in topics_issues],
-                value=topics_issues[0],
+                options=[{"label": topic, "value": topic} for topic in topics_subtopics],
+                value=topics_subtopics[0],
                 style = {"width":"50%"},
                 placeholder= "Select Topic..."
             ),
@@ -674,8 +674,8 @@ passive_layout = html.Div(
         dbc.Container(
             dcc.Dropdown(
                 id="passive-topic-dropdown",
-                options=[{"label": topic, "value": topic} for topic in topics_issues],
-                value=topics_issues[0],
+                options=[{"label": topic, "value": topic} for topic in topics_subtopics],
+                value=topics_subtopics[0],
                 style = {"width":"50%"},
                 placeholder = "Select Topic..."
             ),
@@ -749,8 +749,8 @@ nps_layout = html.Div(
     ]
 )
 
-data_issues = pd.read_csv('/app/data/combined_data.csv')
-topic_df_issues = pd.read_csv('/app/data/topics_review.csv')
+data_subtopics = pd.read_csv('/app/data/combined_data.csv')
+topic_df_subtopics = pd.read_csv('/app/data/topics_review.csv')
 
 
 # trends page layout
@@ -781,8 +781,8 @@ trends_layout = html.Div(
         dbc.Container(
             dcc.Dropdown(
                 id="topic-dropdown",
-                options=[{"label": topic, "value": topic} for topic in topics_issues],
-                value=topics_issues[0],
+                options=[{"label": topic, "value": topic} for topic in topics_subtopics],
+                value=topics_subtopics[0],
                 style = {"width":"50%"},
                 placeholder = "Select Topic..."
             ),
@@ -981,21 +981,21 @@ def update_drill_down_graph(clickData, start_date, end_date):
     # get the df of subtopic nps scores only for the topic clicked
     file_path = f"{topic}.csv"
     data = process_csv(file_path)
-    issue_results = issue_nps(data, start_date, end_date)
+    subtopic_results = subtopic_nps(data, start_date, end_date)
 
     # sort by nps 
-    issue_results_sorted = issue_results.sort_values(by='NPS', ascending=False)
+    subtopic_results_sorted = subtopic_results.sort_values(by='NPS', ascending=False)
 
     # setting the values used to make the axis
-    issue_min_nps = issue_results_sorted['NPS'].min()
-    issue_max_nps = issue_results_sorted['NPS'].max()
-    issue_cap = max(abs(issue_min_nps), abs(issue_max_nps))
+    subtopic_min_nps = subtopic_results_sorted['NPS'].min()
+    subtopic_max_nps = subtopic_results_sorted['NPS'].max()
+    subtopic_cap = max(abs(subtopic_min_nps), abs(subtopic_max_nps))
 
     # making the graph itself
     c_scale = ['red', 'orange', 'green']
-    fig = px.bar(issue_results_sorted, x='subtopic', y='NPS', title=f'NPS for {topic} Subtopic', color='NPS',
+    fig = px.bar(subtopic_results_sorted, x='subtopic', y='NPS', title=f'NPS for {topic} Subtopic', color='NPS',
                  color_continuous_scale=c_scale, color_continuous_midpoint=0)
-    fig.update_yaxes(range=[-issue_cap, issue_cap])
+    fig.update_yaxes(range=[-subtopic_cap, subtopic_cap])
     
     return fig, {'display': 'block'}, html.Div()  # Return the graph and show it, and an empty Div for the container
 
@@ -1051,7 +1051,7 @@ def serialize_figure(fig):
      Input('date_picker_range', 'start_date'),
      Input('date_picker_range', 'end_date'),]
 )
-def update_issues_page(topic, start_date, end_date):
+def update_subtopics_page(topic, start_date, end_date):
     if not topic:  # Check if topic is None or empty string
         # Return default graph and an empty table
         default_fig = plot_default_graph()
@@ -1074,17 +1074,17 @@ def update_issues_page(topic, start_date, end_date):
 
         # Get the DataFrame for the selected topic
         df = topic_to_df[topic]
-        cleaned_df = preprocess(data_issues, df)
-        # Call plot_top_n_issues_time_series function to generate the figure
+        cleaned_df = preprocess(data_subtopics, df)
+        # Call plot_top_n_subtopics_time_series function to generate the figure
         # Get the DataFrame of related subtopics and solutions for the selected topic
-        related_issues_df = select_related_solutions(topic, solutions_df)
+        related_subtopics_df = select_related_solutions(topic, solutions_df)
         
         # Generate the graph
-        fig = plot_top_n_issues_time_series(cleaned_df)
+        fig = plot_top_n_subtopics_time_series(cleaned_df)
         update_date_range(fig, start_date, end_date)
         
         # Generate the table
-        related_issues_df = related_issues_df.rename(columns={'subtopic': 'Subtopic', 'Solution': 'Insight'})
+        related_subtopics_df = related_subtopics_df.rename(columns={'subtopic': 'Subtopic', 'Solution': 'Insight'})
         table = dbc.Container([
                     html.Div(
                         dbc.Alert(
@@ -1099,8 +1099,8 @@ def update_issues_page(topic, start_date, end_date):
                     html.Br(),
                     dash_table.DataTable(
                     id='subtopics-table',
-                    columns=[{"name": i, "id": i} for i in related_issues_df.columns],
-                    data=related_issues_df.to_dict('records'),
+                    columns=[{"name": i, "id": i} for i in related_subtopics_df.columns],
+                    data=related_subtopics_df.to_dict('records'),
                     style_table={'borderRadius': '15px'},  # Dark background color
                     style_header={'backgroundColor': '#6a05ed', 'fontWeight': 'bold', 'color': '#fafaf9'},  # Purple header text
                     style_cell={'backgroundColor': '#303030', 'textAlign': 'left', 'padding': '5px', 'color': '#fafaf9'},  # Light text color
