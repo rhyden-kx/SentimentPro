@@ -809,7 +809,7 @@ csv_review_rater_layout = html.Div(
                     "color": "#ffffff"}),
                     ),
         html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
-        html.Div(id = "csv-review-output-holder")
+        html.Div(id = "csv-review-output-holder"),
         html.Button("Analyse my CSV file", id="csv-review-enter-button"),
         dcc.Loading(
             id="loading-csv-review-output",
