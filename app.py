@@ -1134,6 +1134,18 @@ def parse_csv_contents(contents, filename, date):
     ])
 
 
+# Callback to handle updating output data upload for CSV files
+@app.callback(Output('csv-review-output-holder', 'children'),
+              Input('upload-data', 'contents'),
+              State('upload-data', 'filename'),
+              State('upload-data', 'last_modified'))
+def update_csv_output(list_of_contents, list_of_names, list_of_dates):
+    if list_of_contents is not None:
+        children = [
+            parse_csv_contents(c, n, d) for c, n, d in
+            zip(list_of_contents, list_of_names, list_of_dates)]
+        return children
+
 @app.callback(
     Output("textbox-review-output", "children"),
     [Input("submit-button", "n_clicks")],
@@ -1176,7 +1188,9 @@ def update_output(n_clicks, sentence, uploaded_contents):
             # If no uploaded content, just display NPS score and category
             nps_output_content = [
                 html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
-                html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'})
+                html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
+                html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
+                html.Div(nps_review_output, style={'margin-top': '20px', 'fontSize': '14px'})
             ]
         
         return nps_output_content
