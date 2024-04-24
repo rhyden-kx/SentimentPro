@@ -1176,7 +1176,7 @@ def display_uploaded_filename(filename):
     Output("csv-review-output", "children"),
     Output("csv-loading-bar", "children"),
     [Input("csv-review-enter-button", "n_clicks")],
-    [State('parsed-csv-data', "data")]
+    [State('parsed-csv-data', "value")]
 )
 def update_csv_output(n_clicks, parsed_data):
     if n_clicks is not None and parsed_data:
