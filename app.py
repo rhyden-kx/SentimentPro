@@ -1159,6 +1159,18 @@ def parse_contents(contents, filename, date):
         return html.Div([error_message])
 
 
+# Callback to display the filename upon uploading
+@app.callback(
+    Output("csv-review-output-filename", "children"),  # Output element to display filename
+    [Input("upload-data", "filename")]  # Input: filename from upload component
+)
+def display_uploaded_filename(filename):
+    if filename:
+        return html.Div(f"Uploaded file: {filename}")
+    else:
+        return html.Div("No file uploaded yet")
+
+
 # Callback to handle updating output data for CSV input
 @app.callback(
     Output("csv-review-output", "children"),
