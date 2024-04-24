@@ -1156,10 +1156,10 @@ def update_csv_output(list_of_contents, list_of_names, list_of_dates):
     try:
         if list_of_contents is not None:
             # Perform processing of CSV content here
-            parsed_data = [
+            children = [
                 parse_contents(c, n, d) for c, n, d in
                 zip(list_of_contents, list_of_names, list_of_dates)]
-            return parsed_data, parsed_data
+            return children
         else:
             return None, ""
     except Exception as e:
