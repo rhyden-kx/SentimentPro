@@ -6,6 +6,7 @@ import dash
 import base64
 import datetime
 import io
+import logging
 import dash_bootstrap_components as dbc
 from dash import dash_table
 from dash import Dash, dcc, html, dash_table, Input, Output, State, callback
