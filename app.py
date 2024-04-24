@@ -1155,13 +1155,12 @@ def parse_contents(contents, filename, date):
     [State('upload-data', 'filename'),
      State('upload-data', 'last_modified')]
 )
-def update_csv_output(list_of_contents, list_of_names, list_of_dates):
+def update_csv_output(list_of_contents, filename, date):
     try:
         if list_of_contents is not None:
             # Perform processing of CSV content here
             children = [
-                parse_contents(c, n, d) for c, n, d in
-                zip(list_of_contents, list_of_names, list_of_dates)]
+                parse_contents(c, filename, date) for c in list_of_contents]
             return children, ""
         else:
             return None, ""
@@ -1169,6 +1168,7 @@ def update_csv_output(list_of_contents, list_of_names, list_of_dates):
         print("Error occurred while updating CSV output:")
         print(e)
         return html.Div(["Error occurred while processing the CSV file."]), ""
+
 
 # Callback to handle updating output data for CSV input
 @app.callback(
