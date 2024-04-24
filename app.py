@@ -1116,7 +1116,6 @@ def update_issues_page(topic, start_date, end_date):
         return serialize_figure(fig), table  # Return both the graph and the table
 
 
-
 # Define the parse_contents function to handle uploaded CSV files
 def parse_csv_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
@@ -1126,6 +1125,9 @@ def parse_csv_contents(contents, filename, date):
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+            # Concatenate specific columns (e.g., 'review' column)
+            # If you want to concatenate all columns, you can skip this step
+            concatenated_data = df.apply(lambda row: ' '.join(row), axis=1).str.cat(sep=' ')
         else:
             return html.Div([
                 'Invalid file format. Please upload a CSV file.'
@@ -1136,10 +1138,11 @@ def parse_csv_contents(contents, filename, date):
             'There was an error processing this file.'
         ])
 
-    # Display filename and horizontal line
+    # Return only the filename
     return html.Div([
-        html.H5(filename),
+        html.H5(filename),  # Display filename
         html.Hr(),  # horizontal line
+        '',  # Return empty string for concatenated data
     ])
 
 # Callback to handle updating output data upload for CSV files
