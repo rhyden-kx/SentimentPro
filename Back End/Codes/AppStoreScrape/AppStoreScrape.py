@@ -16,6 +16,4 @@ GXSdf2.head()
 
 print(GXSdf2)
 
-GXSdf2.to_csv('GXS-app-reviews.csv')
-
-GXSdf2.to_csv('/Users/neleht./Library/CloudStorage/OneDrive-NationalUniversityofSingapore/NUS ALL/Y3S2/DSA3101/Backend/AppStoreData.csv')
+GXSdf2.to_csv('../../../Data/AppStoreData.csv')
