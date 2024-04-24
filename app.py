@@ -810,6 +810,7 @@ csv_review_rater_layout = html.Div(
                     ),
         html.Div(id="csv-review-output-filename", style={"margin-bottom": "10px"}),
         html.Div(id = "csv-review-output-holder"),
+        html.Div(id='parsed-csv-data', style={'display': 'none'}),
         html.Button("Analyse my CSV file", id="csv-review-enter-button"),
         dcc.Loading(
             id="loading-csv-review-output",
@@ -1115,34 +1116,31 @@ def update_issues_page(topic, start_date, end_date):
         
         return serialize_figure(fig), table  # Return both the graph and the table
 
-
-# Define the parse_contents function to handle uploaded CSV files
-def parse_csv_contents(contents, filename, date):
+def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
-            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-            # Concatenate specific columns (e.g., 'review' column)
-            # If you want to concatenate all columns, you can skip this step
-            concatenated_data = df.apply(lambda row: ' '.join(row), axis=1).str.cat(sep=' ')
-        else:
-            return html.Div([
-                'Invalid file format. Please upload a CSV file.'
-            ])
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+        elif 'xls' in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
     except Exception as e:
         print(e)
         return html.Div([
             'There was an error processing this file.'
         ])
 
-    # Return only the filename
+    # Concatenate text content of all columns into one long string
+    text_content = ' '.join(df.applymap(str).values.flatten())
+
+    # Return the text content along with the filename
     return html.Div([
-        html.H5(filename),  # Display filename
+        html.H5(filename),
         html.Hr(),  # horizontal line
-        '',  # Return empty string for concatenated data
     ])
 
 # Callback to handle updating output data upload for CSV files
@@ -1154,13 +1152,18 @@ def update_csv_output(list_of_contents, filename, date):
     try:
         if list_of_contents is not None:
             # Perform processing of CSV content here
-            return parse_csv_contents(list_of_contents, filename, date), ""
+            children = [
+                parse_contents(c, n, d) for c, n, d in
+                zip(list_of_contents, list_of_names, list_of_dates)]
+        return children
         else:
             return None, ""
     except Exception as e:
         print("Error occurred while updating CSV output:")
         print(e)
         return html.Div(["Error occurred while processing the CSV file."]), ""
+
+
 
 # Callback to handle updating output data for CSV input
 @app.callback(
@@ -1196,6 +1199,7 @@ def update_textbox_output(n_clicks, sentence):
 @app.callback(
     Output("csv-review-output", "children"),
     Output("csv-loading-bar", "children"),
+    Output("parsed-csv-data", "data"),  # Add a hidden Div to store parsed CSV data
     [Input("csv-review-enter-button", "n_clicks")],
     [State('csv-review-output-holder', "children")]
 )
@@ -1203,13 +1207,14 @@ def update_csv_output(n_clicks, uploaded_contents):
     if n_clicks is not None:
         # Simulate processing delay
         time.sleep(1)
-        # Combine all uploaded text content into one long string
-        uploaded_text = ' '.join([child['props']['children'][0]['props']['children'] for child in uploaded_contents])
+        
+        # Parse the uploaded CSV file and store the parsed data
+        parsed_data = parse_csv_contents(uploaded_contents)  # Call a function to parse CSV data
         
         # Code for NPS rater output using text input
-        nps_score_output = nps_score(uploaded_text)
-        nps_category_output = nps_cat(uploaded_text)
-        nps_review_output = review_analysis(uploaded_text)
+        nps_score_output = nps_score(parsed_data)
+        nps_category_output = nps_cat(parsed_data)
+        nps_review_output = review_analysis(parsed_data)
         
         # Display NPS score and category with review analysis
         nps_output_content = [
