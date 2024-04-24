@@ -17,31 +17,13 @@ To create an innovative system that harnesses advanced natural language processi
     cd SentimentPro
     ```
    
-3. Create a virtual environment (optional but recommended):
+3. Run Docker Compose:
     ```shell script
-    python -m venv venv
-    ```
-
-4. Activate the virtual environment:
-    * On Windows:
-    ```shell script
-    venv\Scripts\activate
-    ```
-    * On Unix or MacOS:
-    ```shell script
-    source venv/bin/activate
-    ```
-
-5. Install the required dependencies:
-   ```shell script
-    pip install -r requirements.txt
+    docker compose up
     ```
    
 ## Usage
 
-1. Run the application in terminal:
-    ```shell script
-     Dashboard v0.3.py # to be changed when app is finalised
-    ```
-2. Open your web browser and navigate to http://localhost:8050 to access the app.
+1. Open your web browser
+2. Navigate to http://localhost:8050 to access the app.
 
