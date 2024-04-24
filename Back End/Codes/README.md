@@ -26,5 +26,13 @@ Run Codes/datacleaning.ipynb to obtain Data/Reviews.csv
 
 ## Obtaining Issues & Summaries 
 
+To obtain the summaries/improvements for specific topic
+Run summary.ipynb to obtain a list of improvements recommended by the Generative AI
+
+To obtain the summaries/improvements for specific subtopics
+Run topic_issue.ipynb to obtain Data/subtopic.csv
+
+
+
 
 
