@@ -1120,7 +1120,7 @@ def update_issues_page(topic, start_date, end_date):
 
 def parse_contents(contents, filename, date):
     try:
-        content_type, content_string = contents.split(',')
+        content_type, content_string = contents.split(';base64,')  # Split by ';base64,'
 
         decoded = base64.b64decode(content_string)
         
