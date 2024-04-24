@@ -1120,21 +1120,25 @@ def update_issues_page(topic, start_date, end_date):
 
 def parse_contents(contents, filename, date):
     try:
-        content_type, content_string = contents.split(';base64,')  # Split by ';base64,'
+        # Decode base64 content directly
+        decoded = base64.b64decode(contents)
 
-        decoded = base64.b64decode(content_string)
-        
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
+            # Assume that the user uploaded an Excel file
             df = pd.read_excel(io.BytesIO(decoded))
         else:
             raise ValueError("Unsupported file format. Please upload a CSV or Excel file.")
 
-        # Concatenate text content of all columns into one long string
-        text_content = ' '.join(df.applymap(str).values.flatten())
+        try:
+            # Concatenate text content of all columns into one long string
+            text_content = ' '.join(df.applymap(str).values.flatten())
+        except Exception as e:
+            error_message = f"Error occurred while concatenating text content: {str(e)}"
+            print(error_message)
+            return html.Div([error_message])
 
         # Return the text content along with the filename
         return html.Div([
@@ -1142,7 +1146,7 @@ def parse_contents(contents, filename, date):
             html.Hr(),  # horizontal line
             html.Div(text_content, id='parsed-csv-data', style={'display': 'none'})  # Add parsed data as a hidden div
         ])
-    
+
     except Exception as e:
         error_message = f"Error occurred while processing the file '{filename}': {str(e)}"
         print(error_message)
