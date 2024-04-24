@@ -8,13 +8,19 @@ pip install ....
 ## Obtaining Raw Customer Reviews
 To obtain customer reviews from both App Store & Google Play Store as csv files respectively. 
 
-Run BackEnd/Codes/AppStoreScrape.py to obtain Back End/Data/AppStoreData.csv
+Run Codes/AppStoreScrape/AppStoreScrape.py to obtain Back End/Data/AppStoreData.csv
 
-Run BackEnd/Codes/PlayStoreScrape/JsonToCSV.mjs to obtain Back End/Data/PlayStoreData.csv
+Run Codes/PlayStoreScrape/JsonToCSV.mjs to obtain Back End/Data/PlayStoreData.csv
 
 
 ## Combining & Cleaning of Data
-Run BackEnd/Codes/CombiningData.ipynb to obtain 
+To combine both App Store & Google Play Store customer reviews into a single csv file: 
+Run CombiningData.ipynb to obtain Data/combined_data.csv
+
+To remove all non-alphabetical characters such as emojis:
+Run Codes/datacleaning.ipynb to obtain Data/Reviews.csv
+
+
 
 
 
