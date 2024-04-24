@@ -1134,54 +1134,6 @@ def parse_csv_contents(contents, filename, date):
     ])
 
 
-# Callback to handle updating output data upload for CSV files
-@app.callback(Output('csv-review-output-holder', 'children'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),
-              State('upload-data', 'last_modified'))
-def update_csv_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            parse_csv_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
-
-
-# Callback to handle text input rating
-@app.callback(
-    Output("textbox-review-output", "children"),
-    [Input("submit-button", "n_clicks")],
-    [State("text-input", "value"),
-     State('textbox-review-output', 'children')]
-)
-def update_output(n_clicks, sentence, uploaded_contents):
-    if n_clicks is not None and uploaded_contents is not None:
-        # Combine all uploaded text content into one long string
-        uploaded_text = ' '.join([child['props']['children'][0]['props']['children'] for child in uploaded_contents])
-
-        # Concatenate the uploaded text and the input sentence
-        full_text = f"{uploaded_text} {sentence}" if uploaded_text else sentence
-
-        # Simulate processing delay
-        time.sleep(1)
-        
-        # Code for NPS rater output
-        nps_score_output = nps_score(full_text)
-        nps_category_output = nps_cat(full_text)
-        nps_review_output = review_analysis(full_text)
-        
-        # Display NPS score, category, and review analysis
-        return html.Div([
-            html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
-            html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
-            html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
-            html.Div(nps_review_output, style={'margin-top': '20px', 'fontSize': '14px'}),
-        ])
-
-    # If not processing, return empty content
-    return ""
-
-
 @app.callback(
     Output("textbox-review-output", "children"),
     [Input("submit-button", "n_clicks")],
@@ -1189,12 +1141,15 @@ def update_output(n_clicks, sentence, uploaded_contents):
      State('csv-review-output-holder', 'children')]
 )
 def update_output(n_clicks, sentence, uploaded_contents):
-    if n_clicks is not None and uploaded_contents is not None:
-        # Combine all uploaded text content into one long string
-        uploaded_text = ' '.join([child['props']['children'][0]['props']['children'] for child in uploaded_contents])
-
-        # Concatenate the uploaded text and the input sentence
-        full_text = f"{uploaded_text} {sentence}" if uploaded_text else sentence
+    if n_clicks is not None:
+        if uploaded_contents is not None:
+            # Combine all uploaded text content into one long string
+            uploaded_text = ' '.join([child['props']['children'][0]['props']['children'] for child in uploaded_contents])
+            # Concatenate the uploaded text and the input sentence
+            full_text = f"{uploaded_text} {sentence}" if uploaded_text else sentence
+        else:
+            # If no uploaded contents, use only the input sentence
+            full_text = sentence
 
         # Simulate processing delay
         time.sleep(1)
@@ -1204,19 +1159,25 @@ def update_output(n_clicks, sentence, uploaded_contents):
         nps_category_output = nps_cat(full_text)
         nps_review_output = review_analysis(full_text)
         
-        # Split the review analysis into paragraphs
-        paragraphs = nps_review_output.split('\n\n')
-        
-        # Create a list of HTML div elements for each paragraph
-        review_divs = [html.Div(paragraph, style={'margin-top': '20px', 'fontSize': '14px'}) for paragraph in paragraphs]
-        
-        # Combine the review divs with NPS score and category
-        nps_output_content = [
-            html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
-            html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
-            html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
-            *review_divs,
-        ]
+        # If there is uploaded content, perform review analysis
+        if uploaded_contents:
+            # Split the review analysis into paragraphs
+            paragraphs = nps_review_output.split('\n\n')
+            # Create a list of HTML div elements for each paragraph
+            review_divs = [html.Div(paragraph, style={'margin-top': '20px', 'fontSize': '14px'}) for paragraph in paragraphs]
+            # Combine the review divs with NPS score and category
+            nps_output_content = [
+                html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
+                html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'}),
+                html.Div("Summary of review:", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-bottom': '20px'}),
+                *review_divs,
+            ]
+        else:
+            # If no uploaded content, just display NPS score and category
+            nps_output_content = [
+                html.Div(f"Net Promoter Score: {nps_score_output}/10", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '20px'}),
+                html.Div(f"NPS Category: {nps_category_output}", style={'fontSize': '16px', 'font-weight': 'bold', 'margin-top': '10px'})
+            ]
         
         return nps_output_content
 
