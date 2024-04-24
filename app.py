@@ -1133,6 +1133,9 @@ def parse_csv_contents(contents, filename, date):
         html.Hr(),  # horizontal line
     ])
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG)  # Enable logging
 
 # Callback to handle updating output data upload for CSV files
 @app.callback(Output('csv-review-output-holder', 'children'),
@@ -1140,11 +1143,23 @@ def parse_csv_contents(contents, filename, date):
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'))
 def update_csv_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            parse_csv_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
+    try:
+        logging.debug(f"list_of_contents: {list_of_contents}")
+        logging.debug(f"list_of_names: {list_of_names}")
+        logging.debug(f"list_of_dates: {list_of_dates}")
+
+        if list_of_contents is not None:
+            children = [
+                parse_csv_contents(c, n, d) for c, n, d in
+                zip(list_of_contents, list_of_names, list_of_dates)]
+            return children
+        else:
+            logging.debug("No contents received")
+            return None
+    except Exception as e:
+        logging.exception("Error occurred while updating CSV output:")
+        return html.Div(["Error occurred while processing the CSV file."])
+
 
 @app.callback(
     Output("textbox-review-output", "children"),
