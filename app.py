@@ -1155,7 +1155,7 @@ def update_csv_output(list_of_contents, filename, date):
             children = [
                 parse_contents(c, n, d) for c, n, d in
                 zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
+            return children
         else:
             return None, ""
     except Exception as e:
