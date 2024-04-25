@@ -7,17 +7,19 @@ To create an innovative system that harnesses advanced natural language processi
 
 ## Setting Up
 
-1. Clone the repository:
+1. Download Docker Desktop at https://www.docker.com/products/docker-desktop/ and install
+
+2. Clone the repository:
     ```shell script
     git clone https://github.com/rhyden-kx/SentimentPro.git
     ```
 
-2. Navigate to this app's directory:
+3. Navigate to this app's directory:
     ```shell script
     cd SentimentPro
     ```
    
-3. Run Docker Compose:
+4. Run Docker Compose:
     ```shell script
     docker compose up
     ```
@@ -25,5 +27,5 @@ To create an innovative system that harnesses advanced natural language processi
 ## Usage
 
 1. Open your web browser
-2. Navigate to http://localhost:8050 to access the app.
+2. Navigate to http://localhost:8050 to access the app
 
