@@ -5,3 +5,6 @@ vaderSentiment
 vaderSentiment.vaderSentiment
 re
 os
+
+numpy
+json
