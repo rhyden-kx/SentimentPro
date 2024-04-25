@@ -2,4 +2,6 @@ mysql-connector-python
 pandas
 h2ogpte
 vaderSentiment
-
+vaderSentiment.vaderSentiment
+re
+os
