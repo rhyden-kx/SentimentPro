@@ -5,6 +5,6 @@ vaderSentiment
 vaderSentiment.vaderSentiment
 re
 os
-
+pandas==2.2.1
 numpy
 json
