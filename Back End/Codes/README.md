@@ -23,6 +23,10 @@ Run Codes/datacleaning.ipynb to obtain Data/Reviews.csv
 ## Topic Modelling
 
 ## Sentiment Analysis
+To check NPS accuracy of the model, run Codes/accuracytestfornps.ipynb
+
+To obtain NPS for a topic or subtopic, run Codes/topic_subtopic_npsfunctions.ipynb
+
 
 ## Obtaining Issues & Summaries 
 
