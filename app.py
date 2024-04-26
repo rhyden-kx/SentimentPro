@@ -1,28 +1,26 @@
 ## Sentiment Pro Dash Code
 
 # Import Necessary Modules & Libraries
-import os
+import base64
+import dash
+import datetime
+import html
 import json
+import io
+import os
 import random
 import time
+import dash_bootstrap_components as dbc
+from dash import Dash, dcc, html, dash_table, Input, Output, State, callback
+from dash.dash_table.Format import Group
+from dash.dependencies import Input, Output, State
+from dash_bootstrap_templates import load_figure_template
 from datetime import datetime as dt
-import io
-import base64
-import html
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.express as px
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-import dash
-import dash_bootstrap_components as dbc
-from dash import dcc, html, dash_table
-from dash.dependencies import Input, Output, State, callback
-from dash_bootstrap_templates import load_figure_template
-from dash.dash_table.Format import Group
-
 
 #Set dash app template
 load_figure_template("darkly")
