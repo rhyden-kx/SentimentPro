@@ -2,7 +2,7 @@
 
 ## Run Requirements.txt
 ```
-pip install Requirements.txt
+pip install requirements.txt
 ```
 
 ## Obtaining Raw Customer Reviews
