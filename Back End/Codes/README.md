@@ -21,6 +21,9 @@ To remove all non-alphabetical characters such as emojis:
 Run Codes/datacleaning.ipynb to obtain Data/Reviews.csv
 
 ## Topic Modelling
+To assign topics to each review, run Codes/LDA Topic.ipynb
+
+To obtain accuracy comparison between LdaMallet vs LdaModel, run Codes/accuracy_comparison_lda.ipynb
 
 ## Sentiment Analysis
 To check NPS accuracy of the model, run Codes/accuracytestfornps.ipynb
