@@ -46,6 +46,7 @@ def process_csv(csv_file):
     
     # Read the CSV file
     topic_df = pd.read_csv(csv_path)
+    topic_df['review']= topic_df['review'].astype(str)
     
     # Initialize the SentimentIntensityAnalyzer
     analyzer = SentimentIntensityAnalyzer()
