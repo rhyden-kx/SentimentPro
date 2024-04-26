@@ -1,41 +1,42 @@
+## Sentiment Pro Dash Code
+
+# Import Necessary Modules & Libraries
 import os
 import json
 import random
 import time
-import dash
+from datetime import datetime as dt
+import io
 import base64
 import html
-import datetime
-import io
-import dash_bootstrap_components as dbc
-from dash import dash_table
-from dash import Dash, dcc, html, dash_table, Input, Output, State, callback
-from dash.dash_table.Format import Group
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
-from dash_bootstrap_templates import load_figure_template
-from datetime import datetime as dt
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.express as px
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-load_figure_template("darkly")
+import dash
+import dash_bootstrap_components as dbc
+from dash import dcc, html, dash_table
+from dash.dependencies import Input, Output, State, callback
+from dash_bootstrap_templates import load_figure_template
+from dash.dash_table.Format import Group
 
+
+#Set dash app template
+load_figure_template("darkly")
 
 # Set Directory (For Local version only)
 
-# Read Data
 
-## Dashboard Page:
+# Dashboard Page:
 topics_df = pd.read_csv('/app/data/TopicsofReviews.csv')
 nps_df = pd.read_csv('/app/data/nps_df.csv')
 score_df = pd.read_csv('/app/data/score_df.csv')
 date_df = pd.read_csv('/app/data/combined_data.csv')
 
-import pandas as pd
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
 analyzer = SentimentIntensityAnalyzer()
 
 # Wrap function to read and edit CSV files
@@ -248,7 +249,7 @@ def table_reviews_category(cat, selected_topic):
     return table
 
 
-# subtopics Page
+# Subtopics Page
 def plot_default_graph():
     # Merge the dataframes
     all_data = data.merge(topic_df_subtopics, on='review', how='inner')
@@ -341,7 +342,7 @@ datasets = {
     'User Interface': user_interface
 }
 
-# subtopic method
+
 def subtopic(data, df):
     # Merge the two DataFrames on the 'review' column
     merged = pd.merge(data, df, on='review', how='inner')
@@ -869,7 +870,7 @@ textbox_review_rater_layout = html.Div(
     ]
 )
 
-# Combine both layouts into one
+# Review Rater page layout
 review_rater_layout = html.Div(
     [
         html.H1("Review Rater", style={"color": "#9155fa"}),
@@ -887,8 +888,6 @@ review_rater_layout = html.Div(
         textbox_review_rater_layout
     ]
 )
-
-
 
 
 # credits page layout
@@ -919,9 +918,9 @@ credits_layout = html.Div(
     ]
 )
 
+
 # App layout
 app.layout = html.Div([sidebar, content])
-
 
 # Callbacks
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
