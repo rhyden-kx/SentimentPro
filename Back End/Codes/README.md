@@ -10,7 +10,7 @@ To obtain customer reviews from both App Store & Google Play Store as csv files 
 
 Run Codes/AppStoreScrape/AppStoreScrape.py to obtain Back End/Data/AppStoreData.csv
 
-Run Codes/PlayStoreScrape/JsonToCSV.mjs to obtain Back End/Data/PlayStoreData.csv
+Follow the README.md and then Codes/PlayStoreScrape/JsonToCSV.mjs to obtain Back End/Data/PlayStoreData.csv
 
 
 ## Combining & Cleaning of Data
@@ -32,12 +32,11 @@ To obtain NPS for a topic or subtopic, run Codes/topic_subtopic_npsfunctions.ipy
 
 
 ## Obtaining Issues & Summaries 
-
 To obtain the summaries/improvements for specific topic
-Run summary.ipynb to obtain a list of improvements recommended by the Generative AI
+Run Codes/summary.ipynb to obtain a list of improvements recommended by the Generative AI
 
 To obtain the summaries/improvements for specific subtopics
-Run topic_issue.ipynb to obtain Data/subtopic.csv
+Run Codes/topic_issue.ipynb to obtain Data/subtopic.csv
 
 
 
