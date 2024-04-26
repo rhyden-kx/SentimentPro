@@ -9,7 +9,7 @@ To create an innovative system that harnesses advanced natural language processi
 
 1. Download Docker Desktop at https://www.docker.com/products/docker-desktop/ and install
 
-2. Open Docker Desktop
+2. Sign in to Docker Desktop
 
 3. Clone the repository:
     ```shell script
