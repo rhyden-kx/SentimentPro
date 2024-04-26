@@ -3,7 +3,7 @@ DSA3101 Sentiment Analysis Project Front End
 
 ## About the Project
 
-To create an innovative system that harnesses advanced natural language processing techniques to analyse customer feedback from various platforms, to improve GXS bank services. Transform raw, qualitative feedback into actionable quantitative data, enabling targeted improvements in service offerings.
+To create an innovative system that harnesses advanced natural language processing techniques to analyse customer feedback from various platforms, to improve GXS bank services. Transform raw, qualitative feedback into actionable quantitative data, enabling targeted improvements in service offerings. For a more detailed explaination of our process you may refer to our [Technical Report](https://docs.google.com/document/d/18U_5O1MlJ_fYsuw4uG6OP9G5r6AiaGz79PiHJDDFejc/edit?usp=sharing).
 
 ## Setting Up
 
